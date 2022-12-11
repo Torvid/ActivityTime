@@ -12,6 +12,7 @@ using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
+using System.Linq;
 
 namespace ActivityWatchButGood
 {
@@ -34,6 +35,12 @@ namespace ActivityWatchButGood
 
     // TODO: test it under heavy load, like gigabytes of logged data. Make sure it's fast.
     // TODO: look into how stable the "timer" is. Maybe it drifts over time.
+    // TODO: make the dog say snarky things about what programs you are using? xD
+
+    // TODO: if a file is open in a web browser, it is not logged
+
+    // TODO: bug, make it so that when the day rolls over, the date automatically changes
+    // TODO: bug, change to weekly mode and change dates around until it breaks
 
     public partial class Form1 : Form
     {
@@ -457,6 +464,18 @@ namespace ActivityWatchButGood
                 ActivityNamesForListboxIndexes.Add(entry.Key);
             }
 
+            // conver to array
+            string[] ActivityNamesForListboxArray = ActivityNamesForListbox.ToArray();
+            ulong[] ActivityNamesForListboxIndexesArray = ActivityNamesForListboxIndexes.ToArray();
+
+            // sort
+            Array.Sort(ActivityNamesForListboxArray, ActivityNamesForListboxIndexesArray);
+            Array.Sort(ActivityNamesForListboxArray);
+
+            // convert back to list
+            ActivityNamesForListbox = ActivityNamesForListboxArray.ToList();
+            ActivityNamesForListboxIndexes = ActivityNamesForListboxIndexesArray.ToList();
+
             activitiesListBox.DataSource = null;
             activitiesListBox.DataSource = ActivityNamesForListbox;
         }
@@ -504,6 +523,7 @@ namespace ActivityWatchButGood
                         continue;
                     activities.Add(hash, new Activity(s));
                 }
+                
             }
             else
             {
@@ -619,9 +639,22 @@ namespace ActivityWatchButGood
             }
             return result;
         }
-
+        
+        int TicksWithMouseStill = 0;
+        System.Drawing.Point CursorPosition = new System.Drawing.Point(0, 0);
         private void tick_Tick(object sender, EventArgs e)
         {
+            TicksWithMouseStill++;
+            if (CursorPosition != System.Windows.Forms.Cursor.Position)
+            {
+                CursorPosition = System.Windows.Forms.Cursor.Position;
+                TicksWithMouseStill = 0;
+            }
+
+            // If the mouse has been still for 10 minutes, we assume the user is afk and pause logging.
+            if (TicksWithMouseStill > 5 * 60 * 60)
+                return;
+
             string focusedActivityName = GetFocusedActivityName();
             ulong hash = 0;
             if (focusedActivityName != "")
