@@ -15,7 +15,9 @@ using System.Windows.Forms.DataVisualization.Charting;
 
 namespace ActivityWatchButGood
 {
-    // Program overview
+    // Overview
+
+    // All program data aside from the exe is stored in %appdata%/ActivityTime/
 
     // programs.csv
     //      text file containing all tracked programs.
@@ -24,9 +26,14 @@ namespace ActivityWatchButGood
     // "session" binary files, (1670681019.bin) and the like.
     //      Every time the program starts, a new session file is created with
     //      filename being the unix timestamp the program started.
-    //      
+    //      the file is a sequence of alternating uint64 like so:
+    //      [hash, time, hash, time, hash, time, ...]
+    //      the hash is the program ID.
+    //      the time is how long that program was focused.
+
 
     // TODO: test it under heavy load, like gigabytes of logged data. Make sure it's fast.
+    // TODO: look into how stable the "timer" is. Maybe it drifts over time.
 
     public partial class Form1 : Form
     {
@@ -56,10 +63,6 @@ namespace ActivityWatchButGood
         {
             using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read))
             {
-                //if(stream.Length == 0)
-                //{
-                //    Crash("Stream length was 0 reading file. tell torvid.");
-                //}
                 stream.Seek((int)(stream.Length - bytes.Length), SeekOrigin.Begin);
                 stream.Read(bytes, 0, bytes.Length);
             }
@@ -82,13 +85,6 @@ namespace ActivityWatchButGood
             }
         }
 
-        // Display an error messsage to the user then close the program.
-        public void Crash(string message)
-        {
-            MessageBox.Show(message, "Fatal Error");
-            //Environment.Exit(0); // die immedietly
-        }
-
         // Extracts the domain name part of a string.
         string CleanupURL(string result)
         {
@@ -96,6 +92,12 @@ namespace ActivityWatchButGood
                 return "";
 
             if (result == "")
+                return "";
+            
+            if (result.Contains(" "))
+                return "";
+
+            if (!result.Contains("."))
                 return "";
 
             Uri uriResult;
@@ -122,10 +124,10 @@ namespace ActivityWatchButGood
         [StructLayout(LayoutKind.Sequential)]
         public struct RECT
         {
-            public int Left;        // x position of upper-left corner
-            public int Top;         // y position of upper-left corner
-            public int Right;       // x position of lower-right corner
-            public int Bottom;      // y position of lower-right corner
+            public int Left;
+            public int Top;
+            public int Right;
+            public int Bottom;
         }
         [DllImport("user32.dll")]
         public static extern bool GetWindowRect(IntPtr hwnd, ref RECT rectangle);
@@ -165,13 +167,6 @@ namespace ActivityWatchButGood
             SocialNetworking,
             SoftwareDevelopment,
             Utilities,
-        }
-
-        enum TimelineStepSize
-        {
-            hourly,
-            daily,
-            weekly,
         }
 
         public class Activity
@@ -222,7 +217,7 @@ namespace ActivityWatchButGood
         string ProgramsFilePath;
         string userDataPath;
         TimeView timeView = TimeView.Daily;
-        TimelineStepSize timelineStepSize = TimelineStepSize.hourly;
+        int timelineSubsteps = 24;
         Dictionary<ulong, Activity> activities;
         ulong currentFocusedProgram = 1337;
         Activity[] top10Activities = new Activity[10];
@@ -258,8 +253,10 @@ namespace ActivityWatchButGood
             return result;
         }
 
+        List<Productivity> productivityTimelinePoints = new List<Productivity>();
         // time spent focusing on something that's not a activity, like the desktop.
         TimeSpan outsideTime = TimeSpan.Zero;
+        Category[] categories;
         TimeSpan totalTime = TimeSpan.Zero;
         // fills "secondsActive" of all activities based on the input timerange
         void ReloadUI()
@@ -267,7 +264,14 @@ namespace ActivityWatchButGood
             if (!initialized)
                 return;
 
-            foreach(Activity t in activities.Values)
+            if (filterType == FilterType.None)
+                filterLabel.Text = "Filter: None";
+            else if (filterType == FilterType.Category)
+                filterLabel.Text = "Filter: " + filteredCategory.ToString();
+            else if (filterType == FilterType.Productivity)
+                filterLabel.Text = "Filter: " + filteredProductivity.ToString();
+
+            foreach (Activity t in activities.Values)
             {
                 t.totalSecondsActive = TimeSpan.Zero;
             }
@@ -275,11 +279,11 @@ namespace ActivityWatchButGood
             totalTime = TimeSpan.Zero;
 
             int ProductivityCount = Enum.GetNames(typeof(Productivity)).Length;
-            TimeSpan[,] TimeHours = new TimeSpan[ProductivityCount, 24];
+            TimeSpan[,] TimeHours = new TimeSpan[ProductivityCount, timelineSubsteps];
 
             int CategoryCount = Enum.GetNames(typeof(Category)).Length;
             TimeSpan[] TimeCategory = new TimeSpan[CategoryCount];
-            Category[] categories = new Category[CategoryCount];
+            categories = new Category[CategoryCount];
             for (int i = 0; i < categories.Length; i++)
             {
                 categories[i] = (Category)i;
@@ -315,17 +319,20 @@ namespace ActivityWatchButGood
 
                         TimeCategory[(int)activities[hash].category] += overlap;
 
+                        TimeSpan viewTimeSpan = ViewEnd - ViewStart;
+                        viewTimeSpan = new TimeSpan(viewTimeSpan.Ticks / timelineSubsteps);
+
+                        DateTimeOffset HourCurrent = ViewStart;
                         // get overlap with the individual days of the week
-                        for (int j = 0; j < 24; j++)
+                        for (int j = 0; j < timelineSubsteps; j++)
                         {
-                            DateTimeOffset HourStart = new DateTime(ViewStart.Year, ViewStart.Month, ViewStart.Day, j, 0, 0);
-                            DateTimeOffset HourEnd;
-                            if (j == 23)
-                                HourEnd = new DateTime(ViewStart.Year, ViewStart.Month, ViewStart.Day + 1, 0, 0, 0);
-                            else
-                                HourEnd = new DateTime(ViewStart.Year, ViewStart.Month, ViewStart.Day, j + 1, 0, 0);
+                            DateTimeOffset HourStart = HourCurrent;
+                            HourCurrent += viewTimeSpan;
+                            DateTimeOffset HourEnd = HourCurrent;
+
                             TimeSpan hourOverlap = GetTimeOverlap(FocusStart, FocusEnd, HourStart, HourEnd);
                             TimeHours[(int)activities[hash].productivity, j] += hourOverlap;
+                            HourStart = HourEnd;
                         }
                     }
                 }
@@ -366,15 +373,6 @@ namespace ActivityWatchButGood
                 categoryNameLabels[i].Text = categories[i].ToString();
             }
 
-            // get top N entires by category
-            //for (int i = 0; i < 24; i++)
-            //{
-            //    for (int j = 0; j < 5; j++)
-            //    {
-            //        TimeHours[j, ]
-            //    }
-            //}
-
             // get top N entries in by application
             List<int> skipList = new List<int>();
             for (int i = 0; i < top10Activities.Length; i++)
@@ -404,7 +402,15 @@ namespace ActivityWatchButGood
                 }
             }
 
-            ClearGraphs();
+            // Clear the graphs
+            timelineChart.Series["VeryDistracting"].Points.Clear();
+            timelineChart.Series["Distracting"].Points.Clear();
+            timelineChart.Series["Neutral"].Points.Clear();
+            timelineChart.Series["Productive"].Points.Clear();
+            timelineChart.Series["VeryProductive"].Points.Clear();
+            histogramChart.Series["Entries"].Points.Clear();
+
+
             foreach (Activity activity in top10Activities)
             {
                 if (activity == null || activity.totalSecondsActive == TimeSpan.Zero)
@@ -413,11 +419,12 @@ namespace ActivityWatchButGood
                 int i = histogramChart.Series["Entries"].Points.AddXY(activity.prettyName, dt);
                 histogramChart.Series["Entries"].Points[i].Color = ProductivityColors[(int)activity.productivity];
             }
-
-            for (int i = 0; i < 24; i++)
+            productivityTimelinePoints.Clear();
+            for (int i = 0; i < timelineSubsteps; i++)
             {
                 for (int j = 0; j < ProductivityCount; j++)
                 {
+                    productivityTimelinePoints.Add((Productivity)j);
                     string productivity = ((Productivity)j).ToString();
                     string hour = i.ToString();
                     string totalSeconds = ((int)TimeHours[j, i].TotalSeconds / 60).ToString();
@@ -436,8 +443,15 @@ namespace ActivityWatchButGood
             ActivityNamesForListboxIndexes.Clear();
             foreach (KeyValuePair<ulong, Activity> entry in activities)
             {
-                //if (entry.Value.totalSecondsActive < TimeSpan.FromSeconds(10))
-                //    continue;
+                // filter anything that's not been logged for more than 10 seconds
+                if (entry.Value.totalSecondsActive < TimeSpan.FromSeconds(10))
+                    continue;
+
+                if (filterType == FilterType.Category && entry.Value.category != filteredCategory)
+                    continue;
+
+                if (filterType == FilterType.Productivity && entry.Value.productivity != filteredProductivity)
+                    continue;
 
                 ActivityNamesForListbox.Add(entry.Value.prettyName);
                 ActivityNamesForListboxIndexes.Add(entry.Key);
@@ -457,21 +471,12 @@ namespace ActivityWatchButGood
 
             dateTimePicker1.Value = DateTime.Now;
         }
-        void ClearGraphs()
-        {
-            timelineChart.Series["VeryDistracting"].Points.Clear();
-            timelineChart.Series["Distracting"].Points.Clear();
-            timelineChart.Series["Neutral"].Points.Clear();
-            timelineChart.Series["Productive"].Points.Clear();
-            timelineChart.Series["VeryProductive"].Points.Clear();
-            histogramChart.Series["Entries"].Points.Clear();
-        }
 
         // Program start
         private void Form1_Load(object sender, EventArgs e)
         {
             string appdataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            userDataPath = $@"{appdataPath}\ActivityWatchButBetter";
+            userDataPath = $@"{appdataPath}\ActivityTime";
             if (!Directory.Exists(userDataPath))
                 Directory.CreateDirectory(userDataPath);
 
@@ -508,7 +513,6 @@ namespace ActivityWatchButGood
             }
 
             initialized = true;
-            // fill out the current thing
             ReloadUI();
         }
 
@@ -563,31 +567,12 @@ namespace ActivityWatchButGood
                 magicOffsetX = 400;
                 magicOffsetY = 50;
                 isBrowser = true;
-                //AutomationElement element = AutomationElement.FromHandle(currentWindow);
-                //element = element.FindFirst(TreeScope.Children, new PropertyCondition(AutomationElement.NameProperty, "Navigation"));
-                //if (element != null)
-                //{
-                //    element = element.FindFirst(TreeScope.Subtree, new PropertyCondition(AutomationElement.LocalizedControlTypeProperty, "edit"));
-                //    if (element != null)
-                //    {
-                //        result = ((ValuePattern)element.GetCurrentPattern(ValuePattern.Pattern)).Current.Value;
-                //        result = CleanupURL(result);
-                //    }
-                //}
             }
             else if (exeName == "chrome")
             {
                 magicOffsetX = 400;
                 magicOffsetY = 60;
                 isBrowser = true;
-                //AutomationElement element = AutomationElement.FromHandle(currentWindow);
-                //element = element.FindFirst(TreeScope.Children, new PropertyCondition(AutomationElement.NameProperty, "Google Chrome"));
-                //element = element.FindFirst(TreeScope.Subtree, new PropertyCondition(AutomationElement.LocalizedControlTypeProperty, "edit"));
-                //if (element != null)
-                //{
-                //    result = ((ValuePattern)element.GetCurrentPattern(ValuePattern.Pattern)).Current.Value;
-                //    result = CleanupURL(result);
-                //}
             }
             else if (exeName == "brave")
             {
@@ -600,15 +585,7 @@ namespace ActivityWatchButGood
                 magicOffsetX = 400;
                 magicOffsetY = 60;
                 isBrowser = true;
-                //AutomationElement element = AutomationElement.FromHandle(currentWindow);
-                //element = element.FindFirst(TreeScope.Descendants, new PropertyCondition(AutomationElement.NameProperty, "Address and search bar"));
-                //if (element != null)
-                //{
-                //    result = ((ValuePattern)element.GetCurrentPattern(ValuePattern.Pattern)).Current.Value;
-                //    result = CleanupURL(result);
-                //}
             }
-
 
             if(isBrowser)
             {
@@ -636,11 +613,8 @@ namespace ActivityWatchButGood
                 if (BrowserMapping.ContainsKey(currentWindow))
                 {
                     AutomationElement element = BrowserMapping[currentWindow];
-                    //if (element != null && element.Current.LocalizedControlType == "edit")
-                    {
-                        result = ((ValuePattern)element.GetCurrentPattern(ValuePattern.Pattern)).Current.Value;
-                        result = CleanupURL(result);
-                    }
+                    result = ((ValuePattern)element.GetCurrentPattern(ValuePattern.Pattern)).Current.Value;
+                    result = CleanupURL(result);
                 }
             }
             return result;
@@ -705,7 +679,6 @@ namespace ActivityWatchButGood
             {
                 DataPoint p = (DataPoint)r.Object;
                 int index = r.PointIndex;
-                //Console.WriteLine(top10[index]?.prettyName);
 
                 for (int i = 0; i < ActivityNamesForListboxIndexes.Count; i++)
                 {
@@ -717,19 +690,39 @@ namespace ActivityWatchButGood
                 }
             }
         }
+        private void timelineChart_MouseClick(object sender, MouseEventArgs e)
+        {
+            var r = timelineChart.HitTest(e.X, e.Y);
+
+            if (r.ChartElementType == ChartElementType.DataPoint)
+            {
+                DataPoint p = (DataPoint)r.Object;
+                int index = r.PointIndex;
+
+                filteredProductivity = productivityTimelinePoints[index];
+                filterType = FilterType.Productivity;
+                ReloadUI();
+            }
+        }
 
         private void histogramChart_MouseMove(object sender, MouseEventArgs e)
         {
             var r = histogramChart.HitTest(e.X, e.Y);
 
             if (r.ChartElementType == ChartElementType.DataPoint)
-            {
                 histogramChart.Cursor = Cursors.Hand;
-            }
             else
-            {
                 histogramChart.Cursor = Cursors.Default;
-            }
+        }
+
+        private void timelineChart_MouseMove(object sender, MouseEventArgs e)
+        {
+            var r = timelineChart.HitTest(e.X, e.Y);
+
+            if (r.ChartElementType == ChartElementType.DataPoint)
+                timelineChart.Cursor = Cursors.Hand;
+            else
+                timelineChart.Cursor = Cursors.Default;
         }
 
         private void histogramChart_Click(object sender, EventArgs e)
@@ -803,17 +796,20 @@ namespace ActivityWatchButGood
                     chooseDayLabel.Text = "Choose Day";
                     dateTimePicker1.Format = DateTimePickerFormat.Short;
                     timeByHourLabel.Text = "Focus by hour";
+                    timelineSubsteps = 24;
                     break;
                 case TimeView.Weekly:
                     chooseDayLabel.Text = "Choose Week";
                     dateTimePicker1.Format = DateTimePickerFormat.Short;
                     timeByHourLabel.Text = "Focus by day";
+                    timelineSubsteps = 7;
                     break;
                 case TimeView.Monthly:
                     chooseDayLabel.Text = "Choose Month";
                     dateTimePicker1.Format = DateTimePickerFormat.Custom;
                     dateTimePicker1.CustomFormat = "yyyy-MM";
                     timeByHourLabel.Text = "Focus by day";
+                    timelineSubsteps = DateTime.DaysInMonth(dateTimePicker1.Value.Year, dateTimePicker1.Value.Month);
                     break;
                 case TimeView.Yearly:
                     chooseDayLabel.Text = "Choose Year";
@@ -821,6 +817,7 @@ namespace ActivityWatchButGood
                     dateTimePicker1.CustomFormat = "yyyy";
                     dateTimePicker1.ShowUpDown = true;
                     timeByHourLabel.Text = "Focus by day";
+                    timelineSubsteps = 52;
                     break;
                 default:
                     break;
@@ -833,14 +830,12 @@ namespace ActivityWatchButGood
             switch (timeView)
             {
                 case TimeView.Daily:
-                    timelineStepSize = TimelineStepSize.hourly;
                     ViewStart = dateTimePicker1.Value;
                     ViewEnd = dateTimePicker1.Value;
                     ViewStart = new DateTime(ViewStart.Year, ViewStart.Month, ViewStart.Day, 0, 0, 0);
                     ViewEnd = new DateTime(ViewEnd.Year, ViewEnd.Month, ViewEnd.Day+1, 0, 0, 0);
                     break;
                 case TimeView.Weekly:
-                    timelineStepSize = TimelineStepSize.daily;
                     int daysInWeek = 7;
                     ViewStart = dateTimePicker1.Value + TimeSpan.FromDays(daysInWeek - (int)dateTimePicker1.Value.DayOfWeek);
                     ViewEnd = dateTimePicker1.Value - TimeSpan.FromDays((int)dateTimePicker1.Value.DayOfWeek);
@@ -848,14 +843,12 @@ namespace ActivityWatchButGood
                     ViewEnd = new DateTime(ViewEnd.Year, ViewEnd.Month, ViewEnd.Day, 0, 0, 0);
                     break;
                 case TimeView.Monthly:
-                    timelineStepSize = TimelineStepSize.daily;
                     ViewStart = dateTimePicker1.Value;
                     ViewEnd = dateTimePicker1.Value;
                     ViewStart = new DateTime(ViewStart.Year, ViewStart.Month, 0, 0, 0, 0);
                     ViewEnd = new DateTime(ViewEnd.Year, ViewEnd.Month+1, 0, 0, 0, 0);
                     break;
                 case TimeView.Yearly:
-                    timelineStepSize = TimelineStepSize.weekly;
                     ViewStart = dateTimePicker1.Value;
                     ViewEnd = dateTimePicker1.Value;
                     ViewStart = new DateTime(ViewStart.Year, 0, 0, 0, 0, 0);
@@ -869,12 +862,59 @@ namespace ActivityWatchButGood
 
         private void pictureBox1_Click(object sender, EventArgs e)
         {
+            filterType = FilterType.None;
             ReloadUI();
         }
 
+
+        Productivity filteredProductivity;
+        Category filteredCategory;
+        FilterType filterType;
+        enum FilterType
+        {
+            None,
+            Category,
+            Productivity,
+        }
         private void productivityComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
 
         }
+
+        private void categoryName4Label_Click(object sender, EventArgs e)
+        {
+            filteredCategory = categories[4];
+            filterType = FilterType.Category;
+            ReloadUI();
+        }
+
+        private void categoryName3Label_Click(object sender, EventArgs e)
+        {
+            filteredCategory = categories[3];
+            filterType = FilterType.Category;
+            ReloadUI();
+        }
+
+        private void categoryName2Label_Click(object sender, EventArgs e)
+        {
+            filteredCategory = categories[2];
+            filterType = FilterType.Category;
+            ReloadUI();
+        }
+
+        private void categoryName1Label_Click(object sender, EventArgs e)
+        {
+            filteredCategory = categories[1];
+            filterType = FilterType.Category;
+            ReloadUI();
+        }
+
+        private void categoryName0Label_Click(object sender, EventArgs e)
+        {
+            filteredCategory = categories[0];
+            filterType = FilterType.Category;
+            ReloadUI();
+        }
+
     }
 }

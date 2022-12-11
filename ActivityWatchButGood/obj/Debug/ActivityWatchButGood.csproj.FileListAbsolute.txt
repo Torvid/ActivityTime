@@ -10,3 +10,15 @@ C:\Users\Stinger\Dropbox\Stinger\Archive\projects\software\ActivityWatchButGood\
 C:\Users\Stinger\Dropbox\Stinger\Archive\projects\software\ActivityWatchButGood\ActivityWatchButGood\ActivityWatchButGood\obj\Debug\Interop.UIAutomationClient.dll
 C:\Users\Stinger\Dropbox\Stinger\Archive\projects\software\ActivityWatchButGood\ActivityWatchButGood\ActivityWatchButGood\obj\Debug\ActivityWatchButGood.csproj.ResolveComReference.cache
 C:\Users\Stinger\Dropbox\Stinger\Archive\projects\software\ActivityWatchButGood\ActivityWatchButGood\ActivityWatchButGood\obj\Debug\ActivityWatchButGood.Form1.resources
+C:\Users\Stinger\Dropbox\Stinger\projects\software\ActivityTime\ActivityWatchButGood\bin\Debug\ActivityWatchButGood.exe.config
+C:\Users\Stinger\Dropbox\Stinger\projects\software\ActivityTime\ActivityWatchButGood\bin\Debug\ActivityWatchButGood.exe
+C:\Users\Stinger\Dropbox\Stinger\projects\software\ActivityTime\ActivityWatchButGood\bin\Debug\ActivityWatchButGood.pdb
+C:\Users\Stinger\Dropbox\Stinger\projects\software\ActivityTime\ActivityWatchButGood\obj\Debug\ActivityWatchButGood.csproj.AssemblyReference.cache
+C:\Users\Stinger\Dropbox\Stinger\projects\software\ActivityTime\ActivityWatchButGood\obj\Debug\Interop.UIAutomationClient.dll
+C:\Users\Stinger\Dropbox\Stinger\projects\software\ActivityTime\ActivityWatchButGood\obj\Debug\ActivityWatchButGood.csproj.ResolveComReference.cache
+C:\Users\Stinger\Dropbox\Stinger\projects\software\ActivityTime\ActivityWatchButGood\obj\Debug\ActivityWatchButGood.Form1.resources
+C:\Users\Stinger\Dropbox\Stinger\projects\software\ActivityTime\ActivityWatchButGood\obj\Debug\ActivityWatchButGood.Properties.Resources.resources
+C:\Users\Stinger\Dropbox\Stinger\projects\software\ActivityTime\ActivityWatchButGood\obj\Debug\ActivityWatchButGood.csproj.GenerateResource.cache
+C:\Users\Stinger\Dropbox\Stinger\projects\software\ActivityTime\ActivityWatchButGood\obj\Debug\ActivityWatchButGood.csproj.CoreCompileInputs.cache
+C:\Users\Stinger\Dropbox\Stinger\projects\software\ActivityTime\ActivityWatchButGood\obj\Debug\ActivityWatchButGood.exe
+C:\Users\Stinger\Dropbox\Stinger\projects\software\ActivityTime\ActivityWatchButGood\obj\Debug\ActivityWatchButGood.pdb
