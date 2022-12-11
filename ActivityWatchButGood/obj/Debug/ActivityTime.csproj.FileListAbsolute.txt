@@ -1,0 +1,12 @@
+C:\Users\Stinger\Dropbox\Stinger\projects\software\ActivityTime\ActivityWatchButGood\obj\Debug\ActivityTime.csproj.AssemblyReference.cache
+C:\Users\Stinger\Dropbox\Stinger\projects\software\ActivityTime\ActivityWatchButGood\obj\Debug\Interop.UIAutomationClient.dll
+C:\Users\Stinger\Dropbox\Stinger\projects\software\ActivityTime\ActivityWatchButGood\obj\Debug\ActivityTime.csproj.ResolveComReference.cache
+C:\Users\Stinger\Dropbox\Stinger\projects\software\ActivityTime\ActivityWatchButGood\obj\Debug\ActivityTime.csproj.GenerateResource.cache
+C:\Users\Stinger\Dropbox\Stinger\projects\software\ActivityTime\ActivityWatchButGood\obj\Debug\ActivityTime.csproj.CoreCompileInputs.cache
+C:\Users\Stinger\Dropbox\Stinger\projects\software\ActivityTime\ActivityWatchButGood\bin\Debug\ActivityTime.exe.config
+C:\Users\Stinger\Dropbox\Stinger\projects\software\ActivityTime\ActivityWatchButGood\bin\Debug\ActivityTime.exe
+C:\Users\Stinger\Dropbox\Stinger\projects\software\ActivityTime\ActivityWatchButGood\bin\Debug\ActivityTime.pdb
+C:\Users\Stinger\Dropbox\Stinger\projects\software\ActivityTime\ActivityWatchButGood\obj\Debug\Form1.resources
+C:\Users\Stinger\Dropbox\Stinger\projects\software\ActivityTime\ActivityWatchButGood\obj\Debug\ActivityTime.Properties.Resources.resources
+C:\Users\Stinger\Dropbox\Stinger\projects\software\ActivityTime\ActivityWatchButGood\obj\Debug\ActivityTime.exe
+C:\Users\Stinger\Dropbox\Stinger\projects\software\ActivityTime\ActivityWatchButGood\obj\Debug\ActivityTime.pdb

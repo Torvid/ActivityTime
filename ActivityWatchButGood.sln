@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.32901.82
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ActivityWatchButGood", "ActivityWatchButGood\ActivityWatchButGood.csproj", "{1496AE7A-2A29-4AB5-B04A-AE65F510E1A3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ActivityTime", "ActivityWatchButGood\ActivityTime.csproj", "{1496AE7A-2A29-4AB5-B04A-AE65F510E1A3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
