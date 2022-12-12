@@ -10,3 +10,16 @@ C:\Users\Stinger\Dropbox\Stinger\projects\software\ActivityTime\ActivityWatchBut
 C:\Users\Stinger\Dropbox\Stinger\projects\software\ActivityTime\ActivityWatchButGood\obj\Debug\ActivityTime.Properties.Resources.resources
 C:\Users\Stinger\Dropbox\Stinger\projects\software\ActivityTime\ActivityWatchButGood\obj\Debug\ActivityTime.exe
 C:\Users\Stinger\Dropbox\Stinger\projects\software\ActivityTime\ActivityWatchButGood\obj\Debug\ActivityTime.pdb
+C:\Users\mattias\Documents\GitHub\ActivityTime\ActivityWatchButGood\bin\Debug\ActivityTime.exe.config
+C:\Users\mattias\Documents\GitHub\ActivityTime\ActivityWatchButGood\bin\Debug\ActivityTime.exe
+C:\Users\mattias\Documents\GitHub\ActivityTime\ActivityWatchButGood\bin\Debug\ActivityTime.pdb
+C:\Users\mattias\Documents\GitHub\ActivityTime\ActivityWatchButGood\obj\Debug\ActivityTime.csproj.AssemblyReference.cache
+C:\Users\mattias\Documents\GitHub\ActivityTime\ActivityWatchButGood\obj\Debug\ActivityTime.csproj.SuggestedBindingRedirects.cache
+C:\Users\mattias\Documents\GitHub\ActivityTime\ActivityWatchButGood\obj\Debug\Interop.UIAutomationClient.dll
+C:\Users\mattias\Documents\GitHub\ActivityTime\ActivityWatchButGood\obj\Debug\ActivityTime.csproj.ResolveComReference.cache
+C:\Users\mattias\Documents\GitHub\ActivityTime\ActivityWatchButGood\obj\Debug\Form1.resources
+C:\Users\mattias\Documents\GitHub\ActivityTime\ActivityWatchButGood\obj\Debug\ActivityTime.Properties.Resources.resources
+C:\Users\mattias\Documents\GitHub\ActivityTime\ActivityWatchButGood\obj\Debug\ActivityTime.csproj.GenerateResource.cache
+C:\Users\mattias\Documents\GitHub\ActivityTime\ActivityWatchButGood\obj\Debug\ActivityTime.csproj.CoreCompileInputs.cache
+C:\Users\mattias\Documents\GitHub\ActivityTime\ActivityWatchButGood\obj\Debug\ActivityTime.exe
+C:\Users\mattias\Documents\GitHub\ActivityTime\ActivityWatchButGood\obj\Debug\ActivityTime.pdb

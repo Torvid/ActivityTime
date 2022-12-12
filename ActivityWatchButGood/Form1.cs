@@ -130,6 +130,9 @@ public partial class Form1 : Form
     [DllImport("user32.dll")]
     static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint ProcessId);
 
+    [DllImport("psapi.dll")]
+    static extern uint GetModuleFileNameEx(IntPtr hProcess, IntPtr hModule, StringBuilder lpBaseName, int nSize);
+
     [StructLayout(LayoutKind.Sequential)]
     public struct RECT
     {
@@ -685,8 +688,65 @@ public partial class Form1 : Form
                 testPoint.Y += rect.Top + magicOffsetY;
 
                 AutomationElement element = AutomationElement.FromPoint(testPoint);
+                Process elementProc = null;
+                List<AutomationElement> ElementsToCheck = new List<AutomationElement>();
+                if (element != null && element.Current.ProcessId != processID) //  we got the wrong processID, something blocking it? weh
+                {
+                    elementProc = Process.GetProcessById(element.Current.ProcessId);
+                    // super slow, maybe fast 
+                    element = AutomationElement.FromHandle(currentWindow);
 
-                if (element != null && element.Current.LocalizedControlType == "edit")
+                    ElementsToCheck.Add(element);
+                    int start = 0;
+                    bool found = false;
+                    for (int q = 0; q < 100; q++)
+                    {
+                        int end = ElementsToCheck.Count;
+                        for (int i = start; i < end; i++)
+                        {
+                            AutomationElement child = TreeWalker.RawViewWalker.GetFirstChild(ElementsToCheck[i]);
+                            start++;
+                            while (child != null)
+                            {
+                                if(child.Current.LocalizedControlType == "pane")
+                                    ElementsToCheck.Add(child);
+                                child = TreeWalker.RawViewWalker.GetNextSibling(child);
+                            }
+                            ////TreeWalker.RawViewWalker.Condition
+                            //AutomationElementCollection elements = ElementsToCheck[i].FindAll(TreeScope.Children, new PropertyCondition(AutomationElement.LocalizedControlTypeProperty, "pane"));
+                            //
+                            //foreach (AutomationElement e in elements)
+                            //{
+                            //    ElementsToCheck.Add(e);
+                            //    //element = e.FindFirst(TreeScope.Children, new PropertyCondition(AutomationElement.LocalizedControlTypeProperty, "edit"));
+                            //    //if(element != null)
+                            //    //{
+                            //    //    found = true;
+                            //    //    break;
+                            //    //    //goto done:
+                            //    //}
+                            //    if (found)
+                            //        break;
+                            //}
+                        }
+                        if (found)
+                            break;
+                    }
+
+                    //done:
+                    // remove empty children
+                    //AutomationElementCollection elements = element.FindAll(TreeScope.Children, new PropertyCondition(AutomationElement.LocalizedControlTypeProperty, "pane"));
+                    //foreach(AutomationElement e in elements)
+                    //{
+                    //    ElementsToCheck.Add(e);
+                    //    //// causes the whole system to lock up
+                    //    //element = e.FindFirst(TreeScope.Descendants, new PropertyCondition(AutomationElement.LocalizedControlTypeProperty, "edit"));
+                    //    //if (element != null)
+                    //    //    break;
+                    //}
+                }
+                
+                if (element != null && element.Current.ProcessId == processID && element.Current.LocalizedControlType == "edit")
                 {
                     BrowserMapping.Add(currentWindow, element);
                 }
