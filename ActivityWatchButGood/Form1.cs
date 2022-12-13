@@ -42,17 +42,11 @@ using UIAutomationClient;
 // TODO: look into how stable the "timer" is. Maybe it drifts over time.
 // TODO: make the dog say snarky things about what programs you are using? xD
 
-// TODO: if a file is open in a web browser, it is not logged
-
 // TODO: bug, make it so that when the day rolls over, the date automatically changes
-// TODO: bug, change to weekly mode and change dates around until it breaks
 
 // TODO: make the datetime picker actually just show the month for moth mode, only show year in year mode, etc.
 
 // TODO: on first startup, it sometimes doesn't let you select things
-
-// TODO: add "web browser file" to the activity list
-
 
 public partial class Form1 : Form
 {
@@ -125,8 +119,11 @@ public partial class Form1 : Form
         if (!Uri.TryCreate(result, UriKind.Absolute, out uriResult))
             return "";
 
-        result = uriResult.Host;
+        if (uriResult.Scheme == "file")
+            return "web browser file";
 
+        result = uriResult.Host;
+        
         if (result.StartsWith("www."))
             return result.Replace("www.", "");
 
@@ -591,21 +588,6 @@ public partial class Form1 : Form
         BrowserActivityUpdaterThread.Start();
     }
 
-    //private void WalkControlElements(AutomationElement rootElement, TreeNode treeNode)
-    //{
-    //    // Conditions for the basic views of the subtree (content, control, and raw) 
-    //    // are available as fields of TreeWalker, and one of these is used in the 
-    //    // following code.
-    //    AutomationElement elementNode = TreeWalker.ControlViewWalker.GetFirstChild(rootElement);
-    //
-    //    while (elementNode != null)
-    //    {
-    //        TreeNode childTreeNode = treeNode.Nodes.Add(elementNode.Current.ControlType.LocalizedControlType);
-    //        WalkControlElements(elementNode, childTreeNode);
-    //        elementNode = TreeWalker.ControlViewWalker.GetNextSibling(elementNode);
-    //    }
-    //}
-
     enum BrowserType
     {
         None,
@@ -619,91 +601,8 @@ public partial class Form1 : Form
         public IntPtr window;
         public BrowserType browserType;
         public IUIAutomationElement element;
-        //public AutomationElement element;
-        //public bool looking;
     }
-    // Mapping of windows to the automation element that has the control.
     ConcurrentDictionary<IntPtr, BrowserData> BrowserMapping = new ConcurrentDictionary<IntPtr, BrowserData>();
-    //Dictionary<IntPtr, bool> BrowserMappingSeeking = new Dictionary<IntPtr, bool>();
-    //Dictionary<IntPtr, Thread> BrowserMappingSeekThread = new Dictionary<IntPtr, Thread>();
-
-    //int delay = 500;
-    //AutomationElement GetChildByName(AutomationElement element, string name)
-    //{
-    //    Thread.Sleep(delay);
-    //    element = TreeWalker.RawViewWalker.GetFirstChild(element);
-    //    if (element == null)
-    //        return null;
-    //    if (element.Current.Name == name)
-    //        return element;
-    //    while (element != null)
-    //    {
-    //        Thread.Sleep(delay);
-    //        element = TreeWalker.RawViewWalker.GetNextSibling(element);
-    //        if (element == null)
-    //            break;
-    //        if (element.Current.Name == name)
-    //            break;
-    //    }
-    //    return element;
-    //}
-    //AutomationElement GetChildByControlType(AutomationElement element, ControlType type)
-    //{
-    //    Thread.Sleep(delay);
-    //    element = TreeWalker.RawViewWalker.GetFirstChild(element);
-    //    if (element == null)
-    //        return null;
-    //    if (element.Current.ControlType == type)
-    //        return element;
-    //    while (element != null)
-    //    {
-    //        Thread.Sleep(delay);
-    //        element = TreeWalker.RawViewWalker.GetNextSibling(element);
-    //        if (element == null)
-    //            break;
-    //        if (element.Current.ControlType == type)
-    //            break;
-    //    }
-    //    return element;
-    //}
-    //AutomationElement[] GetAllChildren(AutomationElement element)
-    //{
-    //    List<AutomationElement> elements = new List<AutomationElement>();
-    //    Thread.Sleep(delay);
-    //    element = TreeWalker.RawViewWalker.GetFirstChild(element);
-    //    if (element != null)
-    //        elements.Add(element);
-    //    while (element != null)
-    //    {
-    //        Thread.Sleep(delay);
-    //        element = TreeWalker.RawViewWalker.GetNextSibling(element);
-    //        if (element != null)
-    //            elements.Add(element);
-    //    }
-    //    return elements.ToArray();
-    //}
-    //AutomationElement[] GetAllChildrenByType(AutomationElement element, ControlType type)
-    //{
-    //    List<AutomationElement> elements = new List<AutomationElement>();
-    //    Thread.Sleep(delay);
-    //    element = TreeWalker.RawViewWalker.GetFirstChild(element);
-    //    if (element != null && element.Current.ControlType == type)
-    //        elements.Add(element);
-    //    while (element != null)
-    //    {
-    //        Thread.Sleep(delay);
-    //        element = TreeWalker.RawViewWalker.GetNextSibling(element);
-    //        if (element != null && element.Current.ControlType == type)
-    //            elements.Add(element);
-    //    }
-    //    return elements.ToArray();
-    //}
-    //bool HasChildren(AutomationElement element)
-    //{
-    //    Thread.Sleep(delay);
-    //    element = TreeWalker.RawViewWalker.GetFirstChild(element);
-    //    return element != null;
-    //}
 
     // https://learn.microsoft.com/en-us/windows/win32/winauto/uiauto-automation-element-propids
     int UIA_ControlTypePropertyId = 30003;
@@ -735,14 +634,7 @@ public partial class Form1 : Form
         
                     if (data.browserType == BrowserType.Firefox)
                     {
-                        //element = element.FindFirst(TreeScope.TreeScope_Children, automation.CreatePropertyCondition(UIA_ClassNamePropertyId, "Navigation"));
-                        element = element.FindFirst(TreeScope.TreeScope_Descendants, automation.CreatePropertyCondition(UIA_ControlTypePropertyId, UIA_EditControlTypeId));
-
-                        
-                        //element = GetChildByName(element, "Navigation");
-                        //element = GetChildByControlType(element, ControlType.ComboBox);
-                        //element = GetChildByControlType(element, ControlType.Edit);
-                        data.element = element;
+                        data.element = element.FindFirst(TreeScope.TreeScope_Descendants, automation.CreatePropertyCondition(UIA_ControlTypePropertyId, UIA_EditControlTypeId));
                     }
                     else if (data.browserType == BrowserType.Chrome)
                     {
@@ -760,67 +652,6 @@ public partial class Form1 : Form
             }
         }
     }
-    //void GetBrowserMappingOld()
-    //{
-    //    while (true)
-    //    {
-    //        foreach (var v in BrowserMapping)
-    //        {
-    //            if (v.Value != null && v.Value.element == null)
-    //            {
-    //                // First we try to snipe the element using "AutomationElement.FromPoint"
-    //                // This however, sometimes fails. If it does, we do a slow,
-    //                // lightly guided breadth-first search for the search bar element.
-    //
-    //                BrowserData data = v.Value;
-    //
-    //                AutomationElement element = null;
-    //                try
-    //                {
-    //                    // fails sometimes for no reason lol
-    //                    element = AutomationElement.FromHandle(data.window);
-    //                }
-    //                catch { }
-    //                if (element == null)
-    //                    continue;
-    //
-    //                if (data.browserType == BrowserType.Firefox)
-    //                {
-    //                    element  = GetChildByName(element, "Navigation");
-    //                    element = GetChildByControlType(element, ControlType.ComboBox);
-    //                    element = GetChildByControlType(element, ControlType.Edit);
-    //                    data.element = element;
-    //                }
-    //                if (data.browserType == BrowserType.Chrome)
-    //                {
-    //                    element = GetChildByName(element, "Google Chrome");
-    //                    element = GetChildByControlType(element, ControlType.Pane);
-    //                    var twoPaneThing = GetAllChildren(element);
-    //                    foreach (var element0 in twoPaneThing)
-    //                    {
-    //                        var twoPaneThing2 = GetAllChildren(element0);
-    //                        foreach (var element1 in twoPaneThing2)
-    //                        {
-    //                            if (!HasChildren(element1))
-    //                                continue;
-    //                            var element2 = GetChildByControlType(element1, ControlType.ToolBar);
-    //                            if (element2 == null)
-    //                                continue;
-    //                            var twoPaneThing3 = GetAllChildren(element2);
-    //                            foreach (var element3 in twoPaneThing3)
-    //                            {
-    //                                var element4 = GetChildByControlType(element3, ControlType.Edit);
-    //                                if (element4 != null)
-    //                                    v.Value.element = element4;
-    //                            }
-    //                        }
-    //                    }
-    //                }
-    //            }
-    //        }
-    //        Thread.Sleep(delay);
-    //    }
-    //}
 
     // This function gets the exe name of whatver window the user has selected.
     // Activities are either exe names, or domain names.
@@ -852,39 +683,25 @@ public partial class Form1 : Form
         // result is the name of the exe.
         string result = exeName;
 
-        // Unless it's a web browser!
-        // We use the windows "screen reader" UI-browsing features to find the "edit" navigation element for every browser.
-        // This code is probably very prone to breaking as web browsers change over time, but is also not very hard to maintain!
-        // It's just simple tree-search and it's meant to be human-browsable for the visually impared.
         bool isBrowser = false;
         BrowserType browserType = BrowserType.None;
-        int magicOffsetX = 0;
-        int magicOffsetY = 0;
         if (exeName == "firefox")
         {
-            magicOffsetX = 400;
-            magicOffsetY = 50;
             browserType = BrowserType.Firefox;
             isBrowser = true;
         }
         else if (exeName == "chrome")
         {
-            magicOffsetX = 400;
-            magicOffsetY = 60;
             browserType = BrowserType.Chrome;
             isBrowser = true;
         }
         else if (exeName == "brave")
         {
-            magicOffsetX = 400;
-            magicOffsetY = 57;
             browserType = BrowserType.Brave;
             isBrowser = true;
         }
         else if (exeName == "msedge")
         {
-            magicOffsetX = 400;
-            magicOffsetY = 60;
             browserType = BrowserType.Edge;
             isBrowser = true;
         }
@@ -898,34 +715,6 @@ public partial class Form1 : Form
                 data.browserType = browserType;
                 BrowserMapping.TryAdd(currentWindow, data);
             }
-
-            //if (!BrowserMappingSeeking.ContainsKey(currentWindow))
-            //{
-            //    BrowserMappingSeeking.Add(currentWindow, false);
-            //
-            //    RECT rect = new RECT();
-            //    GetWindowRect(currentWindow, ref rect);
-            //    System.Windows.Point testPoint = new System.Windows.Point(0, 0);
-            //    testPoint.X += rect.Left + magicOffsetX;
-            //    testPoint.Y += rect.Top + magicOffsetY;
-            //
-            //    AutomationElement element = AutomationElement.FromPoint(testPoint);
-            //    
-            //    if (element != null && element.Current.ProcessId == processID && element.Current.LocalizedControlType == "edit")
-            //    {
-            //        BrowserMapping.Add(currentWindow, element);
-            //    }
-            //    else
-            //    {
-            //        BrowserMappingSeeking.Remove(currentWindow);
-            //    }
-            //}
-            //if (BrowserMapping.ContainsKey(currentWindow) && BrowserMapping[currentWindow].element != null)
-            //{
-            //    AutomationElement element = BrowserMapping[currentWindow].element;
-            //    result = ((ValuePattern)element.GetCurrentPattern(ValuePattern.Pattern)).Current.Value;
-            //    result = CleanupURL(result);
-            //}
 
             if (BrowserMapping.ContainsKey(currentWindow) && BrowserMapping[currentWindow].element != null)
             {
@@ -948,7 +737,7 @@ public partial class Form1 : Form
         ulong hash = 0;
         if (focusedActivityName != "")
         {
-            //Console.WriteLine(focusedActivityName);
+            Console.WriteLine(focusedActivityName);
             hash = HashString(focusedActivityName);
 
             // check if this name exists in the program list.
