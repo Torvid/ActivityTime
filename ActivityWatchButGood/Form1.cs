@@ -9,10 +9,15 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows;
-using System.Windows.Automation;
+//using System.Windows.Automation;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
 using System.Linq;
+using System.Threading;
+using System.Collections.Concurrent;
+using UIAutomationClient;
+//using UIA;
+//using UIAutomationBlockingCoreLib;
 
 // Overview
 
@@ -43,6 +48,11 @@ using System.Linq;
 // TODO: bug, change to weekly mode and change dates around until it breaks
 
 // TODO: make the datetime picker actually just show the month for moth mode, only show year in year mode, etc.
+
+// TODO: on first startup, it sometimes doesn't let you select things
+
+// TODO: add "web browser file" to the activity list
+
 
 public partial class Form1 : Form
 {
@@ -102,7 +112,7 @@ public partial class Form1 : Form
 
         if (result == "")
             return "";
-            
+
         if (result.Contains(" "))
             return "";
 
@@ -169,15 +179,15 @@ public partial class Form1 : Form
         DesignAndComposition,
         Art,
         Entertainment,
-        FocusWork,
+        Work,
         Miscellaneous,
         NewsAndOpinion,
-        OtherWork,
         Personal,
         ReferenceAndLearning,
         Shopping,
         SocialNetworking,
         SoftwareDevelopment,
+        System,
         Utilities,
     }
 
@@ -193,12 +203,12 @@ public partial class Form1 : Form
         Productivity.VeryProductive,
         Productivity.Neutral,
         Productivity.VeryDistracting,
-        Productivity.Productive,
         Productivity.Neutral,
         Productivity.Productive,
         Productivity.VeryDistracting,
         Productivity.VeryDistracting,
         Productivity.VeryProductive,
+        Productivity.Neutral,
         Productivity.Neutral
     };
 
@@ -233,14 +243,14 @@ public partial class Form1 : Form
         {
             string[] splitText = text.Split(',');
 
-            this.name           = splitText[0].Trim();
-            this.hash           = HashString(this.name);
-            this.prettyName     = splitText[1].Trim();
+            this.name = splitText[0].Trim();
+            this.hash = HashString(this.name);
+            this.prettyName = splitText[1].Trim();
 
-            this.productivity   = Productivity.Neutral;
+            this.productivity = Productivity.Neutral;
             Enum.TryParse<Productivity>(splitText[2].Trim(), out this.productivity);
 
-            this.category       = Category.Uncategorized;
+            this.category = Category.Uncategorized;
             Enum.TryParse<Category>(splitText[3].Trim(), out this.category);
         }
     }
@@ -350,7 +360,7 @@ public partial class Form1 : Form
                 ulong count = BitConverter.ToUInt64(data, i + 8);
                 DateTimeOffset FocusStart = startTime;
                 startTime += TimeSpan.FromSeconds(count);
-                DateTimeOffset FocusEnd = startTime;// + TimeSpan.FromSeconds(count);
+                DateTimeOffset FocusEnd = startTime;
                 rawData.Add((hash, FocusStart, FocusEnd));
             }
         }
@@ -364,7 +374,7 @@ public partial class Form1 : Form
             TimeSpan overlap = GetTimeOverlap(FocusStart, FocusEnd, ViewStart, ViewEnd);
             if (overlap == TimeSpan.Zero)
                 continue;
-            //startTime += TimeSpan.FromSeconds(count);
+
             totalTime += overlap;
 
             if (hash == 0)
@@ -477,7 +487,7 @@ public partial class Form1 : Form
 
         foreach (Activity activity in top10Activities)
         {
-            if (activity == null || activity.totalSecondsActive == TimeSpan.Zero)
+            if (activity == null || activity.totalSecondsActive == TimeSpan.FromSeconds(10))
                 continue;
             DateTime dt = new DateTime(2012, 1, 1) + activity.totalSecondsActive;
             int i = histogramChart.Series["Entries"].Points.AddXY(activity.prettyName, dt);
@@ -488,9 +498,9 @@ public partial class Form1 : Form
         {
             for (int j = 0; j < ProductivityCount; j++)
             {
-                productivityTimelinePoints.Add((Productivity)(ProductivityCount-j));
+                productivityTimelinePoints.Add((Productivity)(ProductivityCount - j));
                 string productivity = ((Productivity)j).ToString();
-                string hour = (i+1).ToString();
+                string hour = (i + 1).ToString();
                 string totalSeconds = ((int)TimeHours[j, i].TotalSeconds / 60).ToString();
                 if ((Productivity)j == Productivity.Distracting || (Productivity)j == Productivity.VeryDistracting)
                     totalSeconds = (-(int)TimeHours[j, i].TotalSeconds / 60).ToString();
@@ -520,21 +530,6 @@ public partial class Form1 : Form
             ActivityNamesForListboxIndexes.Add(entry.Key);
         }
 
-        // conver to array
-        string[] ActivityNamesForListboxArray = ActivityNamesForListbox.ToArray();
-        ulong[] ActivityNamesForListboxIndexesArray = ActivityNamesForListboxIndexes.ToArray();
-
-        // sort
-        Array.Sort(ActivityNamesForListboxArray, ActivityNamesForListboxIndexesArray);
-        Array.Sort(ActivityNamesForListboxArray);
-
-        // convert back to list
-        for (int i = 0; i < ActivityNamesForListboxArray.Length; i++)
-        {
-            ActivityNamesForListbox[i] = ActivityNamesForListboxArray[i];
-            ActivityNamesForListboxIndexes[i] = ActivityNamesForListboxIndexesArray[i];
-        }
-
         activitiesListBox.DataSource = null;
         activitiesListBox.DataSource = ActivityNamesForListbox;
     }
@@ -560,7 +555,7 @@ public partial class Form1 : Form
         // Create session file
         string startupTimestamp = DateTimeOffset.Now.ToUnixTimeSeconds().ToString();
         SessionFilePath = $@"{userDataPath}\{startupTimestamp}.bin";
-        if(!File.Exists(SessionFilePath))
+        if (!File.Exists(SessionFilePath))
             File.Create(SessionFilePath).Close();
 
         // Load tracked programs
@@ -581,7 +576,6 @@ public partial class Form1 : Form
                     continue;
                 activities.Add(hash, new Activity(s));
             }
-                
         }
         else
         {
@@ -592,26 +586,241 @@ public partial class Form1 : Form
 
         initialized = true;
         ReloadUI();
+
+        Thread BrowserActivityUpdaterThread = new Thread(GetBrowserMapping);
+        BrowserActivityUpdaterThread.Start();
     }
 
-    private void WalkControlElements(AutomationElement rootElement, TreeNode treeNode)
-    {
-        // Conditions for the basic views of the subtree (content, control, and raw) 
-        // are available as fields of TreeWalker, and one of these is used in the 
-        // following code.
-        AutomationElement elementNode = TreeWalker.ControlViewWalker.GetFirstChild(rootElement);
+    //private void WalkControlElements(AutomationElement rootElement, TreeNode treeNode)
+    //{
+    //    // Conditions for the basic views of the subtree (content, control, and raw) 
+    //    // are available as fields of TreeWalker, and one of these is used in the 
+    //    // following code.
+    //    AutomationElement elementNode = TreeWalker.ControlViewWalker.GetFirstChild(rootElement);
+    //
+    //    while (elementNode != null)
+    //    {
+    //        TreeNode childTreeNode = treeNode.Nodes.Add(elementNode.Current.ControlType.LocalizedControlType);
+    //        WalkControlElements(elementNode, childTreeNode);
+    //        elementNode = TreeWalker.ControlViewWalker.GetNextSibling(elementNode);
+    //    }
+    //}
 
-        while (elementNode != null)
+    enum BrowserType
+    {
+        None,
+        Firefox,
+        Chrome,
+        Edge,
+        Brave,
+    }
+    class BrowserData
+    {
+        public IntPtr window;
+        public BrowserType browserType;
+        public IUIAutomationElement element;
+        //public AutomationElement element;
+        //public bool looking;
+    }
+    // Mapping of windows to the automation element that has the control.
+    ConcurrentDictionary<IntPtr, BrowserData> BrowserMapping = new ConcurrentDictionary<IntPtr, BrowserData>();
+    //Dictionary<IntPtr, bool> BrowserMappingSeeking = new Dictionary<IntPtr, bool>();
+    //Dictionary<IntPtr, Thread> BrowserMappingSeekThread = new Dictionary<IntPtr, Thread>();
+
+    //int delay = 500;
+    //AutomationElement GetChildByName(AutomationElement element, string name)
+    //{
+    //    Thread.Sleep(delay);
+    //    element = TreeWalker.RawViewWalker.GetFirstChild(element);
+    //    if (element == null)
+    //        return null;
+    //    if (element.Current.Name == name)
+    //        return element;
+    //    while (element != null)
+    //    {
+    //        Thread.Sleep(delay);
+    //        element = TreeWalker.RawViewWalker.GetNextSibling(element);
+    //        if (element == null)
+    //            break;
+    //        if (element.Current.Name == name)
+    //            break;
+    //    }
+    //    return element;
+    //}
+    //AutomationElement GetChildByControlType(AutomationElement element, ControlType type)
+    //{
+    //    Thread.Sleep(delay);
+    //    element = TreeWalker.RawViewWalker.GetFirstChild(element);
+    //    if (element == null)
+    //        return null;
+    //    if (element.Current.ControlType == type)
+    //        return element;
+    //    while (element != null)
+    //    {
+    //        Thread.Sleep(delay);
+    //        element = TreeWalker.RawViewWalker.GetNextSibling(element);
+    //        if (element == null)
+    //            break;
+    //        if (element.Current.ControlType == type)
+    //            break;
+    //    }
+    //    return element;
+    //}
+    //AutomationElement[] GetAllChildren(AutomationElement element)
+    //{
+    //    List<AutomationElement> elements = new List<AutomationElement>();
+    //    Thread.Sleep(delay);
+    //    element = TreeWalker.RawViewWalker.GetFirstChild(element);
+    //    if (element != null)
+    //        elements.Add(element);
+    //    while (element != null)
+    //    {
+    //        Thread.Sleep(delay);
+    //        element = TreeWalker.RawViewWalker.GetNextSibling(element);
+    //        if (element != null)
+    //            elements.Add(element);
+    //    }
+    //    return elements.ToArray();
+    //}
+    //AutomationElement[] GetAllChildrenByType(AutomationElement element, ControlType type)
+    //{
+    //    List<AutomationElement> elements = new List<AutomationElement>();
+    //    Thread.Sleep(delay);
+    //    element = TreeWalker.RawViewWalker.GetFirstChild(element);
+    //    if (element != null && element.Current.ControlType == type)
+    //        elements.Add(element);
+    //    while (element != null)
+    //    {
+    //        Thread.Sleep(delay);
+    //        element = TreeWalker.RawViewWalker.GetNextSibling(element);
+    //        if (element != null && element.Current.ControlType == type)
+    //            elements.Add(element);
+    //    }
+    //    return elements.ToArray();
+    //}
+    //bool HasChildren(AutomationElement element)
+    //{
+    //    Thread.Sleep(delay);
+    //    element = TreeWalker.RawViewWalker.GetFirstChild(element);
+    //    return element != null;
+    //}
+
+    // https://learn.microsoft.com/en-us/windows/win32/winauto/uiauto-automation-element-propids
+    int UIA_ControlTypePropertyId = 30003;
+    int UIA_ClassNamePropertyId = 30012;
+
+    // https://learn.microsoft.com/en-us/windows/win32/winauto/uiauto-controltype-ids
+    int UIA_EditControlTypeId = 50004;
+
+    // https://learn.microsoft.com/en-us/windows/win32/winauto/uiauto-controlpattern-ids
+    int UIA_ValuePatternId = 10002;
+
+
+    // function that gets the browser "search bar" element on
+    // a different thread so the event system doesn't cuck us
+    void GetBrowserMapping()
+    {
+        CUIAutomation automation = new CUIAutomation();
+        while (true)
         {
-            TreeNode childTreeNode = treeNode.Nodes.Add(elementNode.Current.ControlType.LocalizedControlType);
-            WalkControlElements(elementNode, childTreeNode);
-            elementNode = TreeWalker.ControlViewWalker.GetNextSibling(elementNode);
+            foreach (var v in BrowserMapping)
+            {
+                if (v.Value != null && v.Value.element == null)
+                {
+                    BrowserData data = v.Value;
+                    var element = automation.ElementFromHandle(data.window);
+        
+                    if (element == null)
+                        continue;
+        
+                    if (data.browserType == BrowserType.Firefox)
+                    {
+                        //element = element.FindFirst(TreeScope.TreeScope_Children, automation.CreatePropertyCondition(UIA_ClassNamePropertyId, "Navigation"));
+                        element = element.FindFirst(TreeScope.TreeScope_Descendants, automation.CreatePropertyCondition(UIA_ControlTypePropertyId, UIA_EditControlTypeId));
+
+                        
+                        //element = GetChildByName(element, "Navigation");
+                        //element = GetChildByControlType(element, ControlType.ComboBox);
+                        //element = GetChildByControlType(element, ControlType.Edit);
+                        data.element = element;
+                    }
+                    else if (data.browserType == BrowserType.Chrome)
+                    {
+                        data.element = element.FindFirst(TreeScope.TreeScope_Descendants, automation.CreatePropertyCondition(UIA_ControlTypePropertyId, UIA_EditControlTypeId));
+                    }
+                    else if(data.browserType == BrowserType.Edge)
+                    {
+                        data.element = element.FindFirst(TreeScope.TreeScope_Descendants, automation.CreatePropertyCondition(UIA_ControlTypePropertyId, UIA_EditControlTypeId));
+                    }
+                    else if(data.browserType == BrowserType.Brave)
+                    {
+                        data.element = element.FindFirst(TreeScope.TreeScope_Descendants, automation.CreatePropertyCondition(UIA_ControlTypePropertyId, UIA_EditControlTypeId));
+                    }
+                }
+            }
         }
     }
-
-    // Mapping of windows to the automation element that has the control.
-    Dictionary<IntPtr, AutomationElement> BrowserMapping = new Dictionary<IntPtr, AutomationElement>();
-    Dictionary<IntPtr, bool> BrowserMappingSeeking = new Dictionary<IntPtr, bool>();
+    //void GetBrowserMappingOld()
+    //{
+    //    while (true)
+    //    {
+    //        foreach (var v in BrowserMapping)
+    //        {
+    //            if (v.Value != null && v.Value.element == null)
+    //            {
+    //                // First we try to snipe the element using "AutomationElement.FromPoint"
+    //                // This however, sometimes fails. If it does, we do a slow,
+    //                // lightly guided breadth-first search for the search bar element.
+    //
+    //                BrowserData data = v.Value;
+    //
+    //                AutomationElement element = null;
+    //                try
+    //                {
+    //                    // fails sometimes for no reason lol
+    //                    element = AutomationElement.FromHandle(data.window);
+    //                }
+    //                catch { }
+    //                if (element == null)
+    //                    continue;
+    //
+    //                if (data.browserType == BrowserType.Firefox)
+    //                {
+    //                    element  = GetChildByName(element, "Navigation");
+    //                    element = GetChildByControlType(element, ControlType.ComboBox);
+    //                    element = GetChildByControlType(element, ControlType.Edit);
+    //                    data.element = element;
+    //                }
+    //                if (data.browserType == BrowserType.Chrome)
+    //                {
+    //                    element = GetChildByName(element, "Google Chrome");
+    //                    element = GetChildByControlType(element, ControlType.Pane);
+    //                    var twoPaneThing = GetAllChildren(element);
+    //                    foreach (var element0 in twoPaneThing)
+    //                    {
+    //                        var twoPaneThing2 = GetAllChildren(element0);
+    //                        foreach (var element1 in twoPaneThing2)
+    //                        {
+    //                            if (!HasChildren(element1))
+    //                                continue;
+    //                            var element2 = GetChildByControlType(element1, ControlType.ToolBar);
+    //                            if (element2 == null)
+    //                                continue;
+    //                            var twoPaneThing3 = GetAllChildren(element2);
+    //                            foreach (var element3 in twoPaneThing3)
+    //                            {
+    //                                var element4 = GetChildByControlType(element3, ControlType.Edit);
+    //                                if (element4 != null)
+    //                                    v.Value.element = element4;
+    //                            }
+    //                        }
+    //                    }
+    //                }
+    //            }
+    //        }
+    //        Thread.Sleep(delay);
+    //    }
+    //}
 
     // This function gets the exe name of whatver window the user has selected.
     // Activities are either exe names, or domain names.
@@ -648,118 +857,84 @@ public partial class Form1 : Form
         // This code is probably very prone to breaking as web browsers change over time, but is also not very hard to maintain!
         // It's just simple tree-search and it's meant to be human-browsable for the visually impared.
         bool isBrowser = false;
+        BrowserType browserType = BrowserType.None;
         int magicOffsetX = 0;
         int magicOffsetY = 0;
         if (exeName == "firefox")
         {
             magicOffsetX = 400;
             magicOffsetY = 50;
+            browserType = BrowserType.Firefox;
             isBrowser = true;
         }
         else if (exeName == "chrome")
         {
             magicOffsetX = 400;
             magicOffsetY = 60;
+            browserType = BrowserType.Chrome;
             isBrowser = true;
         }
         else if (exeName == "brave")
         {
             magicOffsetX = 400;
             magicOffsetY = 57;
+            browserType = BrowserType.Brave;
             isBrowser = true;
         }
         else if (exeName == "msedge")
         {
             magicOffsetX = 400;
             magicOffsetY = 60;
+            browserType = BrowserType.Edge;
             isBrowser = true;
         }
 
         if(isBrowser)
         {
-            if (!BrowserMappingSeeking.ContainsKey(currentWindow))
+            if(!BrowserMapping.ContainsKey(currentWindow))
             {
-                BrowserMappingSeeking.Add(currentWindow, false);
-
-                RECT rect = new RECT();
-                GetWindowRect(currentWindow, ref rect);
-                System.Windows.Point testPoint = new System.Windows.Point(0, 0);
-                testPoint.X += rect.Left + magicOffsetX;
-                testPoint.Y += rect.Top + magicOffsetY;
-
-                AutomationElement element = AutomationElement.FromPoint(testPoint);
-                Process elementProc = null;
-                List<AutomationElement> ElementsToCheck = new List<AutomationElement>();
-                if (element != null && element.Current.ProcessId != processID) //  we got the wrong processID, something blocking it? weh
-                {
-                    elementProc = Process.GetProcessById(element.Current.ProcessId);
-                    // super slow, maybe fast 
-                    element = AutomationElement.FromHandle(currentWindow);
-
-                    ElementsToCheck.Add(element);
-                    int start = 0;
-                    bool found = false;
-                    for (int q = 0; q < 100; q++)
-                    {
-                        int end = ElementsToCheck.Count;
-                        for (int i = start; i < end; i++)
-                        {
-                            AutomationElement child = TreeWalker.RawViewWalker.GetFirstChild(ElementsToCheck[i]);
-                            start++;
-                            while (child != null)
-                            {
-                                if(child.Current.LocalizedControlType == "pane")
-                                    ElementsToCheck.Add(child);
-                                child = TreeWalker.RawViewWalker.GetNextSibling(child);
-                            }
-                            ////TreeWalker.RawViewWalker.Condition
-                            //AutomationElementCollection elements = ElementsToCheck[i].FindAll(TreeScope.Children, new PropertyCondition(AutomationElement.LocalizedControlTypeProperty, "pane"));
-                            //
-                            //foreach (AutomationElement e in elements)
-                            //{
-                            //    ElementsToCheck.Add(e);
-                            //    //element = e.FindFirst(TreeScope.Children, new PropertyCondition(AutomationElement.LocalizedControlTypeProperty, "edit"));
-                            //    //if(element != null)
-                            //    //{
-                            //    //    found = true;
-                            //    //    break;
-                            //    //    //goto done:
-                            //    //}
-                            //    if (found)
-                            //        break;
-                            //}
-                        }
-                        if (found)
-                            break;
-                    }
-
-                    //done:
-                    // remove empty children
-                    //AutomationElementCollection elements = element.FindAll(TreeScope.Children, new PropertyCondition(AutomationElement.LocalizedControlTypeProperty, "pane"));
-                    //foreach(AutomationElement e in elements)
-                    //{
-                    //    ElementsToCheck.Add(e);
-                    //    //// causes the whole system to lock up
-                    //    //element = e.FindFirst(TreeScope.Descendants, new PropertyCondition(AutomationElement.LocalizedControlTypeProperty, "edit"));
-                    //    //if (element != null)
-                    //    //    break;
-                    //}
-                }
-                
-                if (element != null && element.Current.ProcessId == processID && element.Current.LocalizedControlType == "edit")
-                {
-                    BrowserMapping.Add(currentWindow, element);
-                }
-                else
-                {
-                    BrowserMappingSeeking.Remove(currentWindow);
-                }
+                BrowserData data = new BrowserData();
+                data.window = currentWindow;
+                data.browserType = browserType;
+                BrowserMapping.TryAdd(currentWindow, data);
             }
-            if (BrowserMapping.ContainsKey(currentWindow))
+
+            //if (!BrowserMappingSeeking.ContainsKey(currentWindow))
+            //{
+            //    BrowserMappingSeeking.Add(currentWindow, false);
+            //
+            //    RECT rect = new RECT();
+            //    GetWindowRect(currentWindow, ref rect);
+            //    System.Windows.Point testPoint = new System.Windows.Point(0, 0);
+            //    testPoint.X += rect.Left + magicOffsetX;
+            //    testPoint.Y += rect.Top + magicOffsetY;
+            //
+            //    AutomationElement element = AutomationElement.FromPoint(testPoint);
+            //    
+            //    if (element != null && element.Current.ProcessId == processID && element.Current.LocalizedControlType == "edit")
+            //    {
+            //        BrowserMapping.Add(currentWindow, element);
+            //    }
+            //    else
+            //    {
+            //        BrowserMappingSeeking.Remove(currentWindow);
+            //    }
+            //}
+            //if (BrowserMapping.ContainsKey(currentWindow) && BrowserMapping[currentWindow].element != null)
+            //{
+            //    AutomationElement element = BrowserMapping[currentWindow].element;
+            //    result = ((ValuePattern)element.GetCurrentPattern(ValuePattern.Pattern)).Current.Value;
+            //    result = CleanupURL(result);
+            //}
+
+            if (BrowserMapping.ContainsKey(currentWindow) && BrowserMapping[currentWindow].element != null)
             {
-                AutomationElement element = BrowserMapping[currentWindow];
-                result = ((ValuePattern)element.GetCurrentPattern(ValuePattern.Pattern)).Current.Value;
-                result = CleanupURL(result);
+                IUIAutomationElement element = BrowserMapping[currentWindow].element;
+                IUIAutomationValuePattern val = (IUIAutomationValuePattern)element.GetCurrentPattern(UIA_ValuePatternId);
+                if (val.CurrentValue != "")
+                {
+                    result = CleanupURL(val.CurrentValue);
+                }
             }
         }
         return result;

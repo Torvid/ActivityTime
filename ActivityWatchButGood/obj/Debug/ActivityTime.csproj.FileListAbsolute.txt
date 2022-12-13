@@ -23,3 +23,5 @@ C:\Users\mattias\Documents\GitHub\ActivityTime\ActivityWatchButGood\obj\Debug\Ac
 C:\Users\mattias\Documents\GitHub\ActivityTime\ActivityWatchButGood\obj\Debug\ActivityTime.csproj.CoreCompileInputs.cache
 C:\Users\mattias\Documents\GitHub\ActivityTime\ActivityWatchButGood\obj\Debug\ActivityTime.exe
 C:\Users\mattias\Documents\GitHub\ActivityTime\ActivityWatchButGood\obj\Debug\ActivityTime.pdb
+C:\Users\Stinger\Dropbox\Stinger\projects\software\ActivityTime\ActivityWatchButGood\obj\Debug\Interop.UIA.dll
+C:\Users\Stinger\Dropbox\Stinger\projects\software\ActivityTime\ActivityWatchButGood\obj\Debug\Interop.UIAutomationBlockingCoreLib.dll
