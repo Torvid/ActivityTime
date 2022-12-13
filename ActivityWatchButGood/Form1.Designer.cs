@@ -28,17 +28,17 @@ partial class Form1
     private void InitializeComponent()
     {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea3 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Series series7 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea4 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel4 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
-            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel5 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
-            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel6 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
-            System.Windows.Forms.DataVisualization.Charting.Series series8 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series9 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series10 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series11 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series12 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea7 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Series series19 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea8 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel10 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
+            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel11 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
+            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel12 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
+            System.Windows.Forms.DataVisualization.Charting.Series series20 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series21 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series22 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series23 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series24 = new System.Windows.Forms.DataVisualization.Charting.Series();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             this.tick = new System.Windows.Forms.Timer(this.components);
             this.activitiesListBox = new System.Windows.Forms.ListBox();
@@ -285,20 +285,20 @@ partial class Form1
             this.label16.Name = "label16";
             this.label16.Size = new System.Drawing.Size(92, 13);
             this.label16.TabIndex = 21;
-            this.label16.Text = "Version 10 (indev)";
+            this.label16.Text = "Version 12 (indev)";
             // 
             // histogramChart
             // 
             this.histogramChart.BackColor = System.Drawing.SystemColors.Control;
-            chartArea3.AxisX.Interval = 1D;
-            chartArea3.AxisX.IsLabelAutoFit = false;
-            chartArea3.AxisX.LabelAutoFitStyle = System.Windows.Forms.DataVisualization.Charting.LabelAutoFitStyles.WordWrap;
-            chartArea3.AxisX.LabelStyle.Font = new System.Drawing.Font("Microsoft Sans Serif", 7F);
-            chartArea3.AxisX.LabelStyle.IsStaggered = true;
-            chartArea3.AxisX.LabelStyle.TruncatedLabels = true;
-            chartArea3.AxisY.LabelStyle.Format = "H\\h m\\m";
-            chartArea3.Name = "ChartArea1";
-            this.histogramChart.ChartAreas.Add(chartArea3);
+            chartArea7.AxisX.Interval = 1D;
+            chartArea7.AxisX.IsLabelAutoFit = false;
+            chartArea7.AxisX.LabelAutoFitStyle = System.Windows.Forms.DataVisualization.Charting.LabelAutoFitStyles.WordWrap;
+            chartArea7.AxisX.LabelStyle.Font = new System.Drawing.Font("Microsoft Sans Serif", 7F);
+            chartArea7.AxisX.LabelStyle.IsStaggered = true;
+            chartArea7.AxisX.LabelStyle.TruncatedLabels = true;
+            chartArea7.AxisY.LabelStyle.Format = "H\\h m\\m";
+            chartArea7.Name = "ChartArea1";
+            this.histogramChart.ChartAreas.Add(chartArea7);
             this.histogramChart.Location = new System.Drawing.Point(112, 270);
             this.histogramChart.Name = "histogramChart";
             this.histogramChart.Palette = System.Windows.Forms.DataVisualization.Charting.ChartColorPalette.None;
@@ -308,11 +308,11 @@ partial class Form1
         System.Drawing.Color.FromArgb(((int)(((byte)(177)))), ((int)(((byte)(193)))), ((int)(((byte)(191))))),
         System.Drawing.Color.FromArgb(((int)(((byte)(61)))), ((int)(((byte)(128)))), ((int)(((byte)(224))))),
         System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(85)))), ((int)(((byte)(196)))))};
-            series7.ChartArea = "ChartArea1";
-            series7.Name = "Entries";
-            series7.XValueType = System.Windows.Forms.DataVisualization.Charting.ChartValueType.String;
-            series7.YValueType = System.Windows.Forms.DataVisualization.Charting.ChartValueType.Time;
-            this.histogramChart.Series.Add(series7);
+            series19.ChartArea = "ChartArea1";
+            series19.Name = "Entries";
+            series19.XValueType = System.Windows.Forms.DataVisualization.Charting.ChartValueType.String;
+            series19.YValueType = System.Windows.Forms.DataVisualization.Charting.ChartValueType.Time;
+            this.histogramChart.Series.Add(series19);
             this.histogramChart.Size = new System.Drawing.Size(688, 179);
             this.histogramChart.TabIndex = 23;
             this.histogramChart.Text = "chart1";
@@ -322,16 +322,16 @@ partial class Form1
             // timelineChart
             // 
             this.timelineChart.BackColor = System.Drawing.SystemColors.Control;
-            chartArea4.AlignmentOrientation = ((System.Windows.Forms.DataVisualization.Charting.AreaAlignmentOrientations)((System.Windows.Forms.DataVisualization.Charting.AreaAlignmentOrientations.Vertical | System.Windows.Forms.DataVisualization.Charting.AreaAlignmentOrientations.Horizontal)));
-            chartArea4.AxisX.Interval = 1D;
-            customLabel4.Text = "a";
-            customLabel5.Text = "b";
-            customLabel6.Text = "c";
-            chartArea4.AxisX2.CustomLabels.Add(customLabel4);
-            chartArea4.AxisX2.CustomLabels.Add(customLabel5);
-            chartArea4.AxisX2.CustomLabels.Add(customLabel6);
-            chartArea4.Name = "ChartArea1";
-            this.timelineChart.ChartAreas.Add(chartArea4);
+            chartArea8.AlignmentOrientation = ((System.Windows.Forms.DataVisualization.Charting.AreaAlignmentOrientations)((System.Windows.Forms.DataVisualization.Charting.AreaAlignmentOrientations.Vertical | System.Windows.Forms.DataVisualization.Charting.AreaAlignmentOrientations.Horizontal)));
+            chartArea8.AxisX.Interval = 1D;
+            customLabel10.Text = "a";
+            customLabel11.Text = "b";
+            customLabel12.Text = "c";
+            chartArea8.AxisX2.CustomLabels.Add(customLabel10);
+            chartArea8.AxisX2.CustomLabels.Add(customLabel11);
+            chartArea8.AxisX2.CustomLabels.Add(customLabel12);
+            chartArea8.Name = "ChartArea1";
+            this.timelineChart.ChartAreas.Add(chartArea8);
             this.timelineChart.Location = new System.Drawing.Point(262, 105);
             this.timelineChart.Name = "timelineChart";
             this.timelineChart.Palette = System.Windows.Forms.DataVisualization.Charting.ChartColorPalette.None;
@@ -341,26 +341,26 @@ partial class Form1
         System.Drawing.Color.FromArgb(((int)(((byte)(177)))), ((int)(((byte)(193)))), ((int)(((byte)(191))))),
         System.Drawing.Color.FromArgb(((int)(((byte)(61)))), ((int)(((byte)(128)))), ((int)(((byte)(224))))),
         System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(85)))), ((int)(((byte)(196)))))};
-            series8.ChartArea = "ChartArea1";
-            series8.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.StackedColumn;
-            series8.Name = "Distracting";
-            series9.ChartArea = "ChartArea1";
-            series9.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.StackedColumn;
-            series9.Name = "VeryDistracting";
-            series10.ChartArea = "ChartArea1";
-            series10.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.StackedColumn;
-            series10.Name = "Neutral";
-            series11.ChartArea = "ChartArea1";
-            series11.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.StackedColumn;
-            series11.Name = "Productive";
-            series12.ChartArea = "ChartArea1";
-            series12.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.StackedColumn;
-            series12.Name = "VeryProductive";
-            this.timelineChart.Series.Add(series8);
-            this.timelineChart.Series.Add(series9);
-            this.timelineChart.Series.Add(series10);
-            this.timelineChart.Series.Add(series11);
-            this.timelineChart.Series.Add(series12);
+            series20.ChartArea = "ChartArea1";
+            series20.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.StackedColumn;
+            series20.Name = "Distracting";
+            series21.ChartArea = "ChartArea1";
+            series21.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.StackedColumn;
+            series21.Name = "VeryDistracting";
+            series22.ChartArea = "ChartArea1";
+            series22.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.StackedColumn;
+            series22.Name = "Neutral";
+            series23.ChartArea = "ChartArea1";
+            series23.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.StackedColumn;
+            series23.Name = "Productive";
+            series24.ChartArea = "ChartArea1";
+            series24.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.StackedColumn;
+            series24.Name = "VeryProductive";
+            this.timelineChart.Series.Add(series20);
+            this.timelineChart.Series.Add(series21);
+            this.timelineChart.Series.Add(series22);
+            this.timelineChart.Series.Add(series23);
+            this.timelineChart.Series.Add(series24);
             this.timelineChart.Size = new System.Drawing.Size(296, 178);
             this.timelineChart.TabIndex = 24;
             this.timelineChart.Text = "chart2";

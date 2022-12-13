@@ -46,8 +46,6 @@ using UIAutomationClient;
 
 // TODO: make the datetime picker actually just show the month for moth mode, only show year in year mode, etc.
 
-// TODO: on first startup, it sometimes doesn't let you select things
-
 public partial class Form1 : Form
 {
     // First some utlity functions!
@@ -463,7 +461,7 @@ public partial class Form1 : Form
                     j++;
                     continue;
                 }
-                if (t.totalSecondsActive.TotalSeconds > largest)
+                if (t.totalSecondsActive.TotalSeconds > largest && t.totalSecondsActive > TimeSpan.FromSeconds(10))
                 {
                     largest = (int)t.totalSecondsActive.TotalSeconds;
                     skipList[i] = j;
@@ -484,7 +482,7 @@ public partial class Form1 : Form
 
         foreach (Activity activity in top10Activities)
         {
-            if (activity == null || activity.totalSecondsActive == TimeSpan.FromSeconds(10))
+            if (activity == null)
                 continue;
             DateTime dt = new DateTime(2012, 1, 1) + activity.totalSecondsActive;
             int i = histogramChart.Series["Entries"].Points.AddXY(activity.prettyName, dt);
@@ -507,8 +505,11 @@ public partial class Form1 : Form
 
         RefreshListBox();
     }
+    bool noRefreshFlag = false;
     void RefreshListBox()
     {
+        if (noRefreshFlag)
+            return;
         ActivityNamesForListbox.Clear();
         ActivityNamesForListboxIndexes.Clear();
         foreach (KeyValuePair<ulong, Activity> entry in activities)
@@ -526,9 +527,14 @@ public partial class Form1 : Form
             ActivityNamesForListbox.Add(entry.Value.prettyName);
             ActivityNamesForListboxIndexes.Add(entry.Key);
         }
-
+        noRefreshFlag = true;
+        int selected = activitiesListBox.SelectedIndex;
+        if (ActivityNamesForListbox.Count < selected)
+            selected = -1;
         activitiesListBox.DataSource = null;
         activitiesListBox.DataSource = ActivityNamesForListbox;
+        activitiesListBox.SelectedIndex = selected;
+        noRefreshFlag = false;
     }
 
     public Form1()
@@ -584,6 +590,7 @@ public partial class Form1 : Form
         initialized = true;
         ReloadUI();
 
+        // this is slow and unreprdictable so we do it in a different thread.
         Thread BrowserActivityUpdaterThread = new Thread(GetBrowserMapping);
         BrowserActivityUpdaterThread.Start();
     }
@@ -614,9 +621,6 @@ public partial class Form1 : Form
     // https://learn.microsoft.com/en-us/windows/win32/winauto/uiauto-controlpattern-ids
     int UIA_ValuePatternId = 10002;
 
-
-    // function that gets the browser "search bar" element on
-    // a different thread so the event system doesn't cuck us
     void GetBrowserMapping()
     {
         CUIAutomation automation = new CUIAutomation();
