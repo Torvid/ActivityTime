@@ -551,6 +551,8 @@ public partial class Form1 : Form
         dateTimePicker1.Value = DateTime.Now;
     }
 
+    ulong sessionStartTimestamp;
+
     // Program start
     private void Form1_Load(object sender, EventArgs e)
     {
@@ -560,8 +562,8 @@ public partial class Form1 : Form
             Directory.CreateDirectory(userDataPath);
 
         // Create session file
-        string startupTimestamp = DateTimeOffset.Now.ToUnixTimeSeconds().ToString();
-        SessionFilePath = $@"{userDataPath}\{startupTimestamp}.bin";
+        sessionStartTimestamp = (ulong)DateTimeOffset.Now.ToUnixTimeSeconds();
+        SessionFilePath = $@"{userDataPath}\{sessionStartTimestamp}.bin";
         if (!File.Exists(SessionFilePath))
             File.Create(SessionFilePath).Close();
 
@@ -681,7 +683,12 @@ public partial class Form1 : Form
                 IUIAutomationElement element = BrowserMapping[currentWindow].element;
                 if(element != null)
                 {
-                    IUIAutomationValuePattern val = (IUIAutomationValuePattern)element.GetCurrentPattern(UIA_ValuePatternId);
+                    IUIAutomationValuePattern val = null;
+                    try
+                    {
+                        val = (IUIAutomationValuePattern)element.GetCurrentPattern(UIA_ValuePatternId);
+                    }
+                    catch { }
                     if (val != null && val.CurrentValue != "")
                     {
                         result = CleanupURL(val.CurrentValue);
@@ -717,6 +724,23 @@ public partial class Form1 : Form
                 File.AppendAllText(ProgramsFilePath, activity.ToString());
             }
         }
+        
+        byte[] data2 = File.ReadAllBytes(SessionFilePath);
+        ulong fileTimestamp = sessionStartTimestamp;
+        for (int i = 0; i < data2.Length; i += 16)
+        {
+            fileTimestamp += BitConverter.ToUInt64(data2, i + 8);
+        }
+        ulong currentTimestamp = (ulong)DateTimeOffset.Now.ToUnixTimeSeconds();
+        long d = ((long)currentTimestamp - (long)fileTimestamp);
+        Console.WriteLine(d);
+        if (Math.Abs((double)d) > (60 * 5)) // If we've drifted by 5 minutes, reset the counter
+        {
+            currentFocusedProgram = 0;
+            ulong non = 0;
+            AppendAllBytes(SessionFilePath, BitConverter.GetBytes(non));
+            AppendAllBytes(SessionFilePath, BitConverter.GetBytes((ulong)d));
+        }
 
         // If the activity changed, append two bytes
         // first is the hash of the new activity
@@ -734,10 +758,10 @@ public partial class Form1 : Form
         ReadLastBytes(SessionFilePath, data);
         ulong count = BitConverter.ToUInt64(data, 0);
         count++;
-        //Console.WriteLine(count);
         data = BitConverter.GetBytes(count);
         WriteLastBytes(SessionFilePath, data);
     }
+
 
     private void histogramChart_MouseClick(object sender, MouseEventArgs e)
     {
@@ -967,5 +991,16 @@ public partial class Form1 : Form
     private void Form1_FormClosing(object sender, FormClosingEventArgs e)
     {
         Environment.Exit(0);
+    }
+
+    private void refreshStripMenuItem_Click(object sender, EventArgs e)
+    {
+        ReloadUI();
+    }
+
+    private void statsForNerdsToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+        // TODO: log currently active app
+        // Log file delta compared to realtime
     }
 }
