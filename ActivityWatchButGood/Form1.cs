@@ -175,14 +175,14 @@ public partial class Form1 : Form
         Art,
         Entertainment,
         Work,
-        Miscellaneous,
         NewsAndOpinion,
         Personal,
         ReferenceAndLearning,
         Shopping,
-        SocialNetworking,
+        SocialMedia,
         SoftwareDevelopment,
         System,
+        Miscellaneous,
         Utilities,
     }
 
@@ -489,17 +489,21 @@ public partial class Form1 : Form
             histogramChart.Series["Entries"].Points[i].Color = ProductivityColors[(int)activity.productivity];
         }
         productivityTimelinePoints.Clear();
+        
         for (int i = 0; i < timelineSubsteps; i++)
         {
             for (int j = 0; j < ProductivityCount; j++)
             {
-                productivityTimelinePoints.Add((Productivity)(ProductivityCount - j));
+                productivityTimelinePoints.Add((Productivity)(ProductivityCount - j - 1));
                 string productivity = ((Productivity)j).ToString();
                 string hour = (i + 1).ToString();
-                string totalSeconds = ((int)TimeHours[j, i].TotalSeconds / 60).ToString();
+                int totalSeconds = ((int)TimeHours[j, i].TotalSeconds);
                 if ((Productivity)j == Productivity.Distracting || (Productivity)j == Productivity.VeryDistracting)
-                    totalSeconds = (-(int)TimeHours[j, i].TotalSeconds / 60).ToString();
-                timelineChart.Series[productivity].Points.AddXY(hour, totalSeconds);
+                    totalSeconds = (-(int)TimeHours[j, i].TotalSeconds);
+
+                TimeSpan dt = TimeSpan.FromSeconds(totalSeconds);
+                string value = Math.Floor(dt.TotalMinutes).ToString();
+                timelineChart.Series[productivity].Points.AddXY(hour, value);
             }
         }
 
@@ -529,7 +533,7 @@ public partial class Form1 : Form
         }
         noRefreshFlag = true;
         int selected = activitiesListBox.SelectedIndex;
-        if (ActivityNamesForListbox.Count < selected)
+        if (ActivityNamesForListbox.Count <= selected)
             selected = -1;
         activitiesListBox.DataSource = null;
         activitiesListBox.DataSource = ActivityNamesForListbox;
@@ -594,19 +598,9 @@ public partial class Form1 : Form
         Thread BrowserActivityUpdaterThread = new Thread(GetBrowserMapping);
         BrowserActivityUpdaterThread.Start();
     }
-
-    enum BrowserType
-    {
-        None,
-        Firefox,
-        Chrome,
-        Edge,
-        Brave,
-    }
     class BrowserData
     {
         public IntPtr window;
-        public BrowserType browserType;
         public IUIAutomationElement element;
     }
     ConcurrentDictionary<IntPtr, BrowserData> BrowserMapping = new ConcurrentDictionary<IntPtr, BrowserData>();
@@ -635,24 +629,10 @@ public partial class Form1 : Form
         
                     if (element == null)
                         continue;
-        
-                    if (data.browserType == BrowserType.Firefox)
-                    {
-                        data.element = element.FindFirst(TreeScope.TreeScope_Descendants, automation.CreatePropertyCondition(UIA_ControlTypePropertyId, UIA_EditControlTypeId));
-                    }
-                    else if (data.browserType == BrowserType.Chrome)
-                    {
-                        data.element = element.FindFirst(TreeScope.TreeScope_Descendants, automation.CreatePropertyCondition(UIA_ControlTypePropertyId, UIA_EditControlTypeId));
-                    }
-                    else if(data.browserType == BrowserType.Edge)
-                    {
-                        data.element = element.FindFirst(TreeScope.TreeScope_Descendants, automation.CreatePropertyCondition(UIA_ControlTypePropertyId, UIA_EditControlTypeId));
-                    }
-                    else if(data.browserType == BrowserType.Brave)
-                    {
-                        data.element = element.FindFirst(TreeScope.TreeScope_Descendants, automation.CreatePropertyCondition(UIA_ControlTypePropertyId, UIA_EditControlTypeId));
-                    }
+
+                    data.element = element.FindFirst(TreeScope.TreeScope_Descendants, automation.CreatePropertyCondition(UIA_ControlTypePropertyId, UIA_EditControlTypeId));
                 }
+                
             }
         }
     }
@@ -687,46 +667,25 @@ public partial class Form1 : Form
         // result is the name of the exe.
         string result = exeName;
 
-        bool isBrowser = false;
-        BrowserType browserType = BrowserType.None;
-        if (exeName == "firefox")
-        {
-            browserType = BrowserType.Firefox;
-            isBrowser = true;
-        }
-        else if (exeName == "chrome")
-        {
-            browserType = BrowserType.Chrome;
-            isBrowser = true;
-        }
-        else if (exeName == "brave")
-        {
-            browserType = BrowserType.Brave;
-            isBrowser = true;
-        }
-        else if (exeName == "msedge")
-        {
-            browserType = BrowserType.Edge;
-            isBrowser = true;
-        }
-
-        if(isBrowser)
+        if(exeName == "firefox" || exeName == "chrome" || exeName == "brave" || exeName == "msedge")
         {
             if(!BrowserMapping.ContainsKey(currentWindow))
             {
                 BrowserData data = new BrowserData();
                 data.window = currentWindow;
-                data.browserType = browserType;
                 BrowserMapping.TryAdd(currentWindow, data);
             }
 
             if (BrowserMapping.ContainsKey(currentWindow) && BrowserMapping[currentWindow].element != null)
             {
                 IUIAutomationElement element = BrowserMapping[currentWindow].element;
-                IUIAutomationValuePattern val = (IUIAutomationValuePattern)element.GetCurrentPattern(UIA_ValuePatternId);
-                if (val.CurrentValue != "")
+                if(element != null)
                 {
-                    result = CleanupURL(val.CurrentValue);
+                    IUIAutomationValuePattern val = (IUIAutomationValuePattern)element.GetCurrentPattern(UIA_ValuePatternId);
+                    if (val != null && val.CurrentValue != "")
+                    {
+                        result = CleanupURL(val.CurrentValue);
+                    }
                 }
             }
         }
@@ -1003,5 +962,10 @@ public partial class Form1 : Form
     private void Form1_Activated(object sender, EventArgs e)
     {
         ReloadUI();
+    }
+
+    private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+    {
+        Environment.Exit(0);
     }
 }
