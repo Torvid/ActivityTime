@@ -602,6 +602,7 @@ public partial class Form1 : Form
     }
     class BrowserData
     {
+        public string name;
         public IntPtr window;
         public IUIAutomationElement element;
     }
@@ -627,11 +628,18 @@ public partial class Form1 : Form
                 if (v.Value != null && v.Value.element == null)
                 {
                     BrowserData data = v.Value;
-                    var element = automation.ElementFromHandle(data.window);
+                    IUIAutomationElement element = null;
+                    try
+                    {
+                        Thread.Sleep(250);
+                        element = automation.ElementFromHandle(data.window);
+                    }
+                    catch { };
         
                     if (element == null)
                         continue;
 
+                    Thread.Sleep(250);
                     data.element = element.FindFirst(TreeScope.TreeScope_Descendants, automation.CreatePropertyCondition(UIA_ControlTypePropertyId, UIA_EditControlTypeId));
                 }
                 
@@ -674,6 +682,7 @@ public partial class Form1 : Form
             if(!BrowserMapping.ContainsKey(currentWindow))
             {
                 BrowserData data = new BrowserData();
+                data.name = exeName;
                 data.window = currentWindow;
                 BrowserMapping.TryAdd(currentWindow, data);
             }
