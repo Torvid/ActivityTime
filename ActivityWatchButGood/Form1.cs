@@ -650,9 +650,18 @@ public partial class Form1 : Form
 
         if (element == null)
         {
-            StatsLog2("    FindFirst() failed.");
+            StatsLog2("    FindFirst() failed null.");
             return null;
         }
+
+        if(element.CurrentControlType != UIA_EditControlTypeId)
+        {
+            StatsLog2("    FindFirst() failed Not an edit control.");
+        }
+        Process proc = Process.GetProcessById((int)element.CurrentProcessId);
+        StatsLog2("    element found, belongs to: " + proc.ProcessName);
+        StatsLog2("    element found, name is: " + element.CurrentName);
+
 
         IUIAutomationValuePattern value = null;
         try
