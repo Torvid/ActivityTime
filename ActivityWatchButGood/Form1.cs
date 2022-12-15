@@ -39,6 +39,7 @@ using TreeScope = UIAutomationClient.TreeScope;
 //      the hash is the program ID.
 //      the time is how long that program was focused.
 
+// use VisualUIAVerifyNative.exe to navigate windows UI elements to find the edit bar
 
 // TODO: test it under heavy load, like gigabytes of logged data. Make sure it's fast.
 // TODO: look into how stable the "timer" is. Maybe it drifts over time.
@@ -173,8 +174,7 @@ public partial class Form1 : Form
         Uncategorized,
         Business,
         CommunicationAndScheduling,
-        DesignAndComposition,
-        Art,
+        ArtDesignAndComposition,
         Entertainment,
         Work,
         NewsAndOpinion,
@@ -195,10 +195,8 @@ public partial class Form1 : Form
         Productivity.VeryProductive,
         Productivity.Productive,
         Productivity.VeryProductive,
-        Productivity.VeryProductive,
         Productivity.VeryDistracting,
         Productivity.VeryProductive,
-        Productivity.Neutral,
         Productivity.VeryDistracting,
         Productivity.Neutral,
         Productivity.Productive,
@@ -206,7 +204,8 @@ public partial class Form1 : Form
         Productivity.VeryDistracting,
         Productivity.VeryProductive,
         Productivity.Neutral,
-        Productivity.Neutral
+        Productivity.Neutral,
+        Productivity.Neutral,
     };
 
     public class Activity
@@ -599,16 +598,26 @@ public partial class Form1 : Form
         initialized = true;
         ReloadUI();
 
-        // this is slow and unreprdictable so we do it in a different thread.
+        // this is slow and unreprdictable so we do it in a different thread.<
         Thread BrowserActivityUpdaterThread = new Thread(GetBrowserMapping);
         BrowserActivityUpdaterThread.Start();
     }
+
+    enum BrowserType
+    {
+        Firefox,
+        Chrome,
+        Brave,
+        Edge,
+    }
+
     class BrowserData
     {
         public string name;
+        public BrowserType browserType;
         public IntPtr window;
         public IUIAutomationElement elementCOM;
-        public AutomationElement element;
+        public System.Windows.Automation.AutomationElement element;
         //public string domainName;
     }
     ConcurrentDictionary<IntPtr, BrowserData> BrowserMapping = new ConcurrentDictionary<IntPtr, BrowserData>();
@@ -616,6 +625,9 @@ public partial class Form1 : Form
     // https://learn.microsoft.com/en-us/windows/win32/winauto/uiauto-automation-element-propids
     int UIA_ControlTypePropertyId = 30003;
     int UIA_ClassNamePropertyId = 30012;
+    int UIA_AutomationIdPropertyId = 30011;
+
+    int UIA_NamePropertyId = 30005;
 
     // https://learn.microsoft.com/en-us/windows/win32/winauto/uiauto-controltype-ids
     int UIA_EditControlTypeId = 50004;
@@ -644,7 +656,14 @@ public partial class Form1 : Form
         {
             StatsLog2("    FindFirst()");
             Thread.Sleep(250);
-            element = element.FindFirst(TreeScope.TreeScope_Descendants, automation.CreatePropertyCondition(UIA_ControlTypePropertyId, UIA_EditControlTypeId));
+            if(data.browserType == BrowserType.Firefox)
+                element = element.FindFirst(TreeScope.TreeScope_Descendants, automation.CreatePropertyCondition(UIA_AutomationIdPropertyId, "urlbar-input"));
+            if (data.browserType == BrowserType.Brave)
+                element = element.FindFirst(TreeScope.TreeScope_Descendants, automation.CreatePropertyCondition(UIA_NamePropertyId, "Address and search bar"));
+            if (data.browserType == BrowserType.Chrome)
+                element = element.FindFirst(TreeScope.TreeScope_Descendants, automation.CreatePropertyCondition(UIA_NamePropertyId, "Address and search bar"));
+            if (data.browserType == BrowserType.Edge)
+                element = element.FindFirst(TreeScope.TreeScope_Descendants, automation.CreatePropertyCondition(UIA_NamePropertyId, "Address and search bar"));
         }
         catch { };
 
@@ -765,16 +784,26 @@ public partial class Form1 : Form
         }
 
         Thread.Sleep(250);
+        StatsLog2("    GetCurrentPattern()");
         ValuePattern v = ((ValuePattern)element.GetCurrentPattern(ValuePattern.Pattern));
 
         if (v == null)
+        {
+            StatsLog2("    GetCurrentPattern() failed null");
             return null;
+        }
 
         if (v.Current.Value == null)
+        {
+            StatsLog2("    GetCurrentPattern() failed value null");
             return null;
+        }
 
         if (v.Current.Value == "")
+        {
+            StatsLog2("    GetCurrentPattern() failed emptystring");
             return null;
+        }
 
         return element;
     }
@@ -789,6 +818,7 @@ public partial class Form1 : Form
             {
                 if (v.Value != null && v.Value.elementCOM == null)
                 {
+                    StatsLog2("");
                     StatsLog2("--------");
                     StatsLog2("START Check mapping for program: " + v.Value.name + ", window: " + v.Value.window.ToString());
 
@@ -800,7 +830,7 @@ public partial class Form1 : Form
                     if (elementCOM == null)
                     {
                         StatsLog2("Tree navigation");
-                        GetEditElementViaTreeNavigation(automation, data);
+                        elementCOM = GetEditElementViaTreeNavigation(automation, data);
                     }
                     if (elementCOM == null)
                         StatsLog2("Tree navigation FAILED.");
@@ -808,19 +838,19 @@ public partial class Form1 : Form
                     // COM API Dead Reckoning
                     if (elementCOM == null)
                     {
-                        StatsLog2("Dead Reckoning via API COM");
+                        StatsLog2("Dead Reckoning via COM API");
                         elementCOM = GetEditElementViaDeadReckoningCOM(automation, data);
                     }
                     if (elementCOM == null)
                         StatsLog2("Dead Reckoning via COM API FAILED");
-
+                    
                     // Managed API Dead Reckoning
                     if (elementCOM == null)
                     {
                         StatsLog2("Dead Reckoning via Managed API ");
                         element = GetEditElementViaDeadReckoning(data);
                     }
-                    if (element == null)
+                    if (elementCOM == null && element == null)
                         StatsLog2("Dead Reckoning via Managed API FAILED");
 
 
@@ -896,6 +926,16 @@ public partial class Form1 : Form
                 BrowserData data = new BrowserData();
                 data.name = exeName;
                 data.window = currentWindow;
+
+                if (exeName == "firefox")
+                    data.browserType = BrowserType.Firefox;
+                if (exeName == "chrome")
+                    data.browserType = BrowserType.Chrome;
+                if (exeName == "brave")
+                    data.browserType = BrowserType.Brave;
+                if (exeName == "msedge")
+                    data.browserType = BrowserType.Edge;
+
                 BrowserMapping.TryAdd(currentWindow, data);
             }
 
