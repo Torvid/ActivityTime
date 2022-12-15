@@ -16,6 +16,8 @@ using System.Linq;
 using System.Threading;
 using System.Collections.Concurrent;
 using UIAutomationClient;
+using System.Windows.Automation;
+using TreeScope = UIAutomationClient.TreeScope;
 //using UIA;
 //using UIAutomationBlockingCoreLib;
 
@@ -549,6 +551,7 @@ public partial class Form1 : Form
         timeViewComboBox.DataSource = Enum.GetValues(typeof(TimeView));
 
         dateTimePicker1.Value = DateTime.Now;
+        
     }
 
     ulong sessionStartTimestamp;
@@ -604,7 +607,9 @@ public partial class Form1 : Form
     {
         public string name;
         public IntPtr window;
-        public IUIAutomationElement element;
+        public IUIAutomationElement elementCOM;
+        public AutomationElement element;
+        //public string domainName;
     }
     ConcurrentDictionary<IntPtr, BrowserData> BrowserMapping = new ConcurrentDictionary<IntPtr, BrowserData>();
 
@@ -618,39 +623,226 @@ public partial class Form1 : Form
     // https://learn.microsoft.com/en-us/windows/win32/winauto/uiauto-controlpattern-ids
     int UIA_ValuePatternId = 10002;
 
+    IUIAutomationElement GetEditElementViaTreeNavigation(CUIAutomation automation, BrowserData data)
+    {
+        IUIAutomationElement element = null;
+        try
+        {
+            StatsLog2("    ElementFromHandle()");
+            Thread.Sleep(250);
+            element = automation.ElementFromHandle(data.window);
+        }
+        catch { };
+
+        if (element == null)
+        {
+            StatsLog2("    ElementFromHandle() failed.");
+            return null;
+        }
+
+        try
+        {
+            StatsLog2("    FindFirst()");
+            Thread.Sleep(250);
+            element = element.FindFirst(TreeScope.TreeScope_Descendants, automation.CreatePropertyCondition(UIA_ControlTypePropertyId, UIA_EditControlTypeId));
+        }
+        catch { };
+
+        if (element == null)
+        {
+            StatsLog2("    FindFirst() failed.");
+            return null;
+        }
+
+        IUIAutomationValuePattern value = null;
+        try
+        {
+            StatsLog2("    GetCurrentPattern()");
+            Thread.Sleep(250);
+            value = (IUIAutomationValuePattern)element.GetCurrentPattern(UIA_ValuePatternId);
+        }
+        catch { }
+
+        if (value == null)
+        {
+            StatsLog2("    GetCurrentPattern() failed null.");
+            return null;
+        }
+
+        if (value.CurrentValue == "")
+        {
+            StatsLog2("    GetCurrentPattern() failed emptystring.");
+            return null;
+        }
+
+        return element;
+    }
+
+    IUIAutomationElement GetEditElementViaDeadReckoningCOM(CUIAutomation automation, BrowserData data)
+    {
+        int magicOffsetX = 400;
+        int magicOffsetY = 55;
+        RECT rect = new RECT();
+        GetWindowRect(data.window, ref rect);
+        tagPOINT testPoint = new tagPOINT();
+        testPoint.x += rect.Left + magicOffsetX;
+        testPoint.y += rect.Top + magicOffsetY;
+
+        Thread.Sleep(250);
+        IUIAutomationElement element = null;
+        try
+        {
+            StatsLog2("    ElementFromPoint()");
+            Thread.Sleep(250);
+            element = automation.ElementFromPoint(testPoint);
+        }
+        catch { }
+
+        if (element == null)
+        {
+            StatsLog2("    ElementFromPoint() failed.");
+            return null;
+        }
+
+        IUIAutomationValuePattern value = null;
+        try
+        {
+            StatsLog2("    GetCurrentPattern()");
+            Thread.Sleep(250);
+            value = (IUIAutomationValuePattern)element.GetCurrentPattern(UIA_ValuePatternId);
+        }
+        catch { }
+
+        if (value == null)
+        {
+            StatsLog2("    GetCurrentPattern() failed null.");
+            return null;
+        }
+
+        if (value.CurrentValue == "")
+        {
+            StatsLog2("    GetCurrentPattern() failed emptystring.");
+            return null;
+        }
+
+        return element;
+    }
+
+    AutomationElement GetEditElementViaDeadReckoning(BrowserData data)
+    {
+        int magicOffsetX = 400;
+        int magicOffsetY = 55;
+        RECT rect = new RECT();
+        System.Windows.Point testPoint = new System.Windows.Point(0, 0);
+        testPoint.X += rect.Left + magicOffsetX;
+        testPoint.Y += rect.Top + magicOffsetY;
+
+        StatsLog2("    FromPoint()");
+        Thread.Sleep(250);
+        AutomationElement element = AutomationElement.FromPoint(testPoint);
+        if (element == null)
+        {
+            StatsLog2("    FromPoint() failed null");
+            return null;
+        }
+
+        Process proc = Process.GetProcessById((int)element.Current.ProcessId);
+        StatsLog2("    element found, belongs to: " + proc.ProcessName);
+
+        if (element.Current.LocalizedControlType != "edit")
+        {
+            StatsLog2("    FromPoint() failed wrong element type");
+            return null;
+        }
+
+        Thread.Sleep(250);
+        ValuePattern v = ((ValuePattern)element.GetCurrentPattern(ValuePattern.Pattern));
+
+        if (v == null)
+            return null;
+
+        if (v.Current.Value == null)
+            return null;
+
+        if (v.Current.Value == "")
+            return null;
+
+        return element;
+    }
+
     void GetBrowserMapping()
     {
         CUIAutomation automation = new CUIAutomation();
         while (true)
         {
+            //statsString = "";
             foreach (var v in BrowserMapping)
             {
-                if (v.Value != null && v.Value.element == null)
+                if (v.Value != null && v.Value.elementCOM == null)
                 {
-                    BrowserData data = v.Value;
-                    IUIAutomationElement element = null;
-                    try
-                    {
-                        Thread.Sleep(250);
-                        element = automation.ElementFromHandle(data.window);
-                    }
-                    catch { };
-        
-                    if (element == null)
-                        continue;
+                    StatsLog2("--------");
+                    StatsLog2("START Check mapping for program: " + v.Value.name + ", window: " + v.Value.window.ToString());
 
-                    Thread.Sleep(250);
-                    data.element = element.FindFirst(TreeScope.TreeScope_Descendants, automation.CreatePropertyCondition(UIA_ControlTypePropertyId, UIA_EditControlTypeId));
+                    BrowserData data = v.Value;
+                    IUIAutomationElement elementCOM = null;
+                    AutomationElement element = null;
+
+                    // Tree naviation
+                    if (elementCOM == null)
+                    {
+                        StatsLog2("Tree navigation");
+                        GetEditElementViaTreeNavigation(automation, data);
+                    }
+                    if (elementCOM == null)
+                        StatsLog2("Tree navigation FAILED.");
+
+                    // COM API Dead Reckoning
+                    if (elementCOM == null)
+                    {
+                        StatsLog2("Dead Reckoning via API COM");
+                        elementCOM = GetEditElementViaDeadReckoningCOM(automation, data);
+                    }
+                    if (elementCOM == null)
+                        StatsLog2("Dead Reckoning via COM API FAILED");
+
+                    // Managed API Dead Reckoning
+                    if (elementCOM == null)
+                    {
+                        StatsLog2("Dead Reckoning via Managed API ");
+                        element = GetEditElementViaDeadReckoning(data);
+                    }
+                    if (element == null)
+                        StatsLog2("Dead Reckoning via Managed API FAILED");
+
+
+                    if (elementCOM == null && element == null)
+                    {
+                        StatsLog2("Everything failed. Trying again...");
+                        continue;
+                    }
+                    StatsLog2("Success.");
+                    v.Value.elementCOM = elementCOM;
+                    v.Value.element = element;
                 }
-                
             }
+            statsString2 = statsString;
         }
     }
+    void StatsLog(string message)
+    {
+        //statsString += message + "\n";
+    }
+    void StatsLog2(string message)
+    {
+        statsString += message + "\n";
+    }
+
 
     // This function gets the exe name of whatver window the user has selected.
     // Activities are either exe names, or domain names.
     string GetFocusedActivityName()
     {
+        StatsLog("GetFocusedActivityName()");
         // If the mouse has been still for 10 minutes, we assume the user is afk and pause logging.
         TicksWithMouseStill++;
         if (CursorPosition != System.Windows.Forms.Cursor.Position)
@@ -659,13 +851,21 @@ public partial class Form1 : Form
             TicksWithMouseStill = 0;
         }
         if (TicksWithMouseStill > (10 * 60 * 60))
+        {
+            StatsLog("Mouse was still for 10 minutes, logging paused.");
             return "";
+        }
 
         // get window handle
+        StatsLog("Get window handle.");
         IntPtr currentWindow = GetForegroundWindow();
         if (currentWindow == IntPtr.Zero)
+        {
+            StatsLog("Get window failed.");
             return "";
+        }
 
+        StatsLog("Get program name.");
         uint processID = 0;
         uint threadID = GetWindowThreadProcessId(currentWindow, out processID);
 
@@ -677,20 +877,23 @@ public partial class Form1 : Form
         // result is the name of the exe.
         string result = exeName;
 
-        if(exeName == "firefox" || exeName == "chrome" || exeName == "brave" || exeName == "msedge")
+        StatsLog("Get program name: " + exeName);
+        if (exeName == "firefox" || exeName == "chrome" || exeName == "brave" || exeName == "msedge")
         {
-            if(!BrowserMapping.ContainsKey(currentWindow))
+            StatsLog("program is web browser");
+            if (!BrowserMapping.ContainsKey(currentWindow))
             {
+                StatsLog("program missing in keymap, adding it.");
                 BrowserData data = new BrowserData();
                 data.name = exeName;
                 data.window = currentWindow;
                 BrowserMapping.TryAdd(currentWindow, data);
             }
 
-            if (BrowserMapping.ContainsKey(currentWindow) && BrowserMapping[currentWindow].element != null)
+            if (BrowserMapping.ContainsKey(currentWindow) && BrowserMapping[currentWindow] != null)
             {
-                IUIAutomationElement element = BrowserMapping[currentWindow].element;
-                if(element != null)
+                IUIAutomationElement element = BrowserMapping[currentWindow].elementCOM;
+                if (element != null)
                 {
                     IUIAutomationValuePattern val = null;
                     try
@@ -707,16 +910,20 @@ public partial class Form1 : Form
         }
         return result;
     }
-        
+    
+    string statsString;
+    string statsString2;
+
     int TicksWithMouseStill = 0;
     System.Drawing.Point CursorPosition = new System.Drawing.Point(0, 0);
     private void tick_Tick(object sender, EventArgs e)
     {
         string focusedActivityName = GetFocusedActivityName();
+        statsLabel.Text = statsString2;
         ulong hash = 0;
+        activeAppLabel.Text = "???";
         if (focusedActivityName != "")
         {
-            Console.WriteLine(focusedActivityName);
             hash = HashString(focusedActivityName);
 
             // check if this name exists in the program list.
@@ -742,7 +949,7 @@ public partial class Form1 : Form
         }
         ulong currentTimestamp = (ulong)DateTimeOffset.Now.ToUnixTimeSeconds();
         long d = ((long)currentTimestamp - (long)fileTimestamp);
-        Console.WriteLine(d);
+        //Console.WriteLine(d);
         if (Math.Abs((double)d) > (60 * 5)) // If we've drifted by 5 minutes, reset the counter
         {
             currentFocusedProgram = 0;
@@ -769,6 +976,10 @@ public partial class Form1 : Form
         count++;
         data = BitConverter.GetBytes(count);
         WriteLastBytes(SessionFilePath, data);
+        if(focusedActivityName != "")
+        {
+            activeAppLabel.Text = focusedActivityName + ": " + TimeSpan.FromSeconds(count).ToString();
+        }
     }
 
 
@@ -1011,5 +1222,15 @@ public partial class Form1 : Form
     {
         // TODO: log currently active app
         // Log file delta compared to realtime
+    }
+
+    private void refreshToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+        ReloadUI();
+    }
+
+    private void startsForNerdsToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+        statsPanel.Visible = !statsPanel.Visible;
     }
 }
