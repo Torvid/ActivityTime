@@ -1075,7 +1075,8 @@ public partial class Form1 : Form
             nameTextBox.Text = selectedActivity.prettyName;
             productivityComboBox.SelectedIndex = (int)selectedActivity.productivity;
             categoryComboBox.SelectedIndex = (int)selectedActivity.category;
-            activityNameLabel.Text = selectedActivity.name;
+            activityNameLabel.Text = "name: " + selectedActivity.name;
+            countLabel.Text = "time: " + selectedActivity.totalSecondsActive.ToString();
         }
     }
     private void button1_Click(object sender, EventArgs e)
@@ -1254,5 +1255,10 @@ public partial class Form1 : Form
     {
         filterType = FilterType.None;
         ReloadUI();
+    }
+
+    private void activityNameLabel_Click(object sender, EventArgs e)
+    {
+
     }
 }
