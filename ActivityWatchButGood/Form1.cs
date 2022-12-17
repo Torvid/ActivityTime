@@ -9,17 +9,13 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows;
-//using System.Windows.Automation;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
 using System.Linq;
 using System.Threading;
 using System.Collections.Concurrent;
 using UIAutomationClient;
-using System.Windows.Automation;
 using TreeScope = UIAutomationClient.TreeScope;
-//using UIA;
-//using UIAutomationBlockingCoreLib;
 
 // Overview
 
@@ -311,10 +307,14 @@ public partial class Form1 : Form
         Category,
         Productivity,
     }
-
+    static int MathMod(int a, int b)
+    {
+        return (Math.Abs(a * b) + a) % b;
+    }
     // fills "secondsActive" of all activities based on the input timerange
     void ReloadUI()
     {
+        editPanel.Visible = false;
         if (!initialized)
             return;
 
@@ -440,7 +440,7 @@ public partial class Form1 : Form
             double percentage = TimeCategory[i].TotalSeconds / Total.TotalSeconds;
             categoryPctLabels[i].Text = Math.Round(percentage * 100) + "%";
             categoryNameLabels[i].Text = categories[i].ToString();
-            categoryProgressPanels[i].Width = (int)(237.0 * percentage);
+            categoryProgressPanels[i].Width = (int)(265.0 * percentage);
             categoryProgressPanels[i].BackColor = ProductivityColors[(int)CategoryProductivity[(int)categories[i]]];
         }
 
@@ -498,6 +498,30 @@ public partial class Form1 : Form
                 productivityTimelinePoints.Add((Productivity)(ProductivityCount - j - 1));
                 string productivity = ((Productivity)j).ToString();
                 string hour = (i + 1).ToString();
+                switch (timeView)
+                {
+                    case TimeView.Daily:
+                        hour = (i).ToString("00");
+                        break;
+                    case TimeView.Weekly:
+                        switch (i)
+                        {
+                            case 0: hour = "Mon"; break;
+                            case 1: hour = "Tue"; break;
+                            case 2: hour = "Wen"; break;
+                            case 3: hour = "Thu"; break;
+                            case 4: hour = "Fri"; break;
+                            case 5: hour = "Sat"; break;
+                            case 6: hour = "Sun"; break;
+                        }
+                        break;
+                    case TimeView.Monthly:
+                        break;
+                    case TimeView.Yearly:
+                        break;
+                    default:
+                        break;
+                }
                 int totalSeconds = ((int)TimeHours[j, i].TotalSeconds);
                 if ((Productivity)j == Productivity.Distracting || (Productivity)j == Productivity.VeryDistracting)
                     totalSeconds = (-(int)TimeHours[j, i].TotalSeconds);
@@ -513,8 +537,6 @@ public partial class Form1 : Form
     bool noRefreshFlag = false;
     void RefreshListBox()
     {
-        if (noRefreshFlag)
-            return;
         ActivityNamesForListbox.Clear();
         ActivityNamesForListboxIndexes.Clear();
         foreach (KeyValuePair<ulong, Activity> entry in activities)
@@ -533,12 +555,9 @@ public partial class Form1 : Form
             ActivityNamesForListboxIndexes.Add(entry.Key);
         }
         noRefreshFlag = true;
-        int selected = activitiesListBox.SelectedIndex;
-        if (ActivityNamesForListbox.Count <= selected)
-            selected = -1;
         activitiesListBox.DataSource = null;
         activitiesListBox.DataSource = ActivityNamesForListbox;
-        activitiesListBox.SelectedIndex = selected;
+        activitiesListBox.ClearSelected();
         noRefreshFlag = false;
     }
 
@@ -617,9 +636,9 @@ public partial class Form1 : Form
         public BrowserType browserType;
         public IntPtr window;
         public IUIAutomationElement elementCOM;
-        public System.Windows.Automation.AutomationElement element;
-        //public string domainName;
     }
+
+    //static Mutex mutex = new Mutex();
     ConcurrentDictionary<IntPtr, BrowserData> BrowserMapping = new ConcurrentDictionary<IntPtr, BrowserData>();
 
     // https://learn.microsoft.com/en-us/windows/win32/winauto/uiauto-automation-element-propids
@@ -697,7 +716,17 @@ public partial class Form1 : Form
             return null;
         }
 
-        if (value.CurrentValue == "")
+        string CurrentValue = "";
+        try
+        {
+            CurrentValue = value.CurrentValue;
+        }
+        catch
+        {
+            StatsLog2("    GetCurrentPattern() com timeout.");
+            return null;
+        }
+        if (CurrentValue == "")
         {
             StatsLog2("    GetCurrentPattern() failed emptystring.");
             return null;
@@ -746,8 +775,17 @@ public partial class Form1 : Form
             StatsLog2("    GetCurrentPattern() failed null.");
             return null;
         }
-
-        if (value.CurrentValue == "")
+        string CurrentValue = "";
+        try
+        {
+            CurrentValue = value.CurrentValue;
+        }
+        catch
+        {
+            StatsLog2("    GetCurrentPattern() com timeout.");
+            return null;
+        }
+        if (CurrentValue == "")
         {
             StatsLog2("    GetCurrentPattern() failed emptystring.");
             return null;
@@ -755,64 +793,16 @@ public partial class Form1 : Form
 
         return element;
     }
-
-    AutomationElement GetEditElementViaDeadReckoning(BrowserData data)
-    {
-        int magicOffsetX = 400;
-        int magicOffsetY = 55;
-        RECT rect = new RECT();
-        System.Windows.Point testPoint = new System.Windows.Point(0, 0);
-        testPoint.X += rect.Left + magicOffsetX;
-        testPoint.Y += rect.Top + magicOffsetY;
-
-        StatsLog2("    FromPoint()");
-        Thread.Sleep(250);
-        AutomationElement element = AutomationElement.FromPoint(testPoint);
-        if (element == null)
-        {
-            StatsLog2("    FromPoint() failed null");
-            return null;
-        }
-
-        Process proc = Process.GetProcessById((int)element.Current.ProcessId);
-        StatsLog2("    element found, belongs to: " + proc.ProcessName);
-
-        if (element.Current.LocalizedControlType != "edit")
-        {
-            StatsLog2("    FromPoint() failed wrong element type");
-            return null;
-        }
-
-        Thread.Sleep(250);
-        StatsLog2("    GetCurrentPattern()");
-        ValuePattern v = ((ValuePattern)element.GetCurrentPattern(ValuePattern.Pattern));
-
-        if (v == null)
-        {
-            StatsLog2("    GetCurrentPattern() failed null");
-            return null;
-        }
-
-        if (v.Current.Value == null)
-        {
-            StatsLog2("    GetCurrentPattern() failed value null");
-            return null;
-        }
-
-        if (v.Current.Value == "")
-        {
-            StatsLog2("    GetCurrentPattern() failed emptystring");
-            return null;
-        }
-
-        return element;
-    }
-
     void GetBrowserMapping()
     {
         CUIAutomation automation = new CUIAutomation();
         while (true)
         {
+            // manners
+            Thread.Sleep(1);
+
+
+            //mutex.WaitOne();
             //statsString = "";
             foreach (var v in BrowserMapping)
             {
@@ -824,16 +814,16 @@ public partial class Form1 : Form
 
                     BrowserData data = v.Value;
                     IUIAutomationElement elementCOM = null;
-                    AutomationElement element = null;
+                    //AutomationElement element = null;
 
                     // Tree naviation
                     if (elementCOM == null)
                     {
-                        StatsLog2("Tree navigation");
+                        StatsLog2("Tree navigation via COM API");
                         elementCOM = GetEditElementViaTreeNavigation(automation, data);
                     }
                     if (elementCOM == null)
-                        StatsLog2("Tree navigation FAILED.");
+                        StatsLog2("Tree navigation via COM API FAILED.");
 
                     // COM API Dead Reckoning
                     if (elementCOM == null)
@@ -844,32 +834,17 @@ public partial class Form1 : Form
                     if (elementCOM == null)
                         StatsLog2("Dead Reckoning via COM API FAILED");
                     
-                    // Managed API Dead Reckoning
                     if (elementCOM == null)
-                    {
-                        StatsLog2("Dead Reckoning via Managed API ");
-                        element = GetEditElementViaDeadReckoning(data);
-                    }
-                    if (elementCOM == null && element == null)
-                        StatsLog2("Dead Reckoning via Managed API FAILED");
-
-
-                    if (elementCOM == null && element == null)
                     {
                         StatsLog2("Everything failed. Trying again...");
                         continue;
                     }
                     StatsLog2("Success.");
                     v.Value.elementCOM = elementCOM;
-                    v.Value.element = element;
                 }
             }
             statsString2 = statsString;
         }
-    }
-    void StatsLog(string message)
-    {
-        //statsString += message + "\n";
     }
     void StatsLog2(string message)
     {
@@ -881,7 +856,6 @@ public partial class Form1 : Form
     // Activities are either exe names, or domain names.
     string GetFocusedActivityName()
     {
-        StatsLog("GetFocusedActivityName()");
         // If the mouse has been still for 10 minutes, we assume the user is afk and pause logging.
         TicksWithMouseStill++;
         if (CursorPosition != System.Windows.Forms.Cursor.Position)
@@ -891,20 +865,14 @@ public partial class Form1 : Form
         }
         if (TicksWithMouseStill > (10 * 60 * 60))
         {
-            StatsLog("Mouse was still for 10 minutes, logging paused.");
             return "";
         }
 
         // get window handle
-        StatsLog("Get window handle.");
         IntPtr currentWindow = GetForegroundWindow();
         if (currentWindow == IntPtr.Zero)
-        {
-            StatsLog("Get window failed.");
             return "";
-        }
 
-        StatsLog("Get program name.");
         uint processID = 0;
         uint threadID = GetWindowThreadProcessId(currentWindow, out processID);
 
@@ -916,13 +884,10 @@ public partial class Form1 : Form
         // result is the name of the exe.
         string result = exeName;
 
-        StatsLog("Get program name: " + exeName);
         if (exeName == "firefox" || exeName == "chrome" || exeName == "brave" || exeName == "msedge")
         {
-            StatsLog("program is web browser");
             if (!BrowserMapping.ContainsKey(currentWindow))
             {
-                StatsLog("program missing in keymap, adding it.");
                 BrowserData data = new BrowserData();
                 data.name = exeName;
                 data.window = currentWindow;
@@ -936,7 +901,9 @@ public partial class Form1 : Form
                 if (exeName == "msedge")
                     data.browserType = BrowserType.Edge;
 
+                //mutex.WaitOne();
                 BrowserMapping.TryAdd(currentWindow, data);
+                //mutex.ReleaseMutex();
             }
 
             if (BrowserMapping.ContainsKey(currentWindow) && BrowserMapping[currentWindow] != null)
@@ -950,9 +917,15 @@ public partial class Form1 : Form
                         val = (IUIAutomationValuePattern)element.GetCurrentPattern(UIA_ValuePatternId);
                     }
                     catch { }
-                    if (val != null && val.CurrentValue != "")
+                    string CurrentValue = "";
+                    try
                     {
-                        result = CleanupURL(val.CurrentValue);
+                        CurrentValue = val.CurrentValue;
+                    }
+                    catch { }
+                    if (CurrentValue != "")
+                    {
+                        result = CleanupURL(CurrentValue);
                     }
                 }
             }
@@ -1090,51 +1063,41 @@ public partial class Form1 : Form
 
     private void activitiesListBox_SelectedIndexChanged(object sender, EventArgs e)
     {
-        if (activitiesListBox.SelectedIndex == -1)
+        if (noRefreshFlag)
             return;
-
-        Activity selectedActivity = activities[ActivityNamesForListboxIndexes[activitiesListBox.SelectedIndex]];
-        nameTextBox.Text = selectedActivity.prettyName;
-        productivityComboBox.SelectedIndex = (int)selectedActivity.productivity;
-        categoryComboBox.SelectedIndex = (int)selectedActivity.category;
-        activityNameLabel.Text = selectedActivity.name;
-        countLabel.Text = selectedActivity.totalSecondsActive.ToString();
-        ReloadUI();
+        if (activitiesListBox.SelectedIndex == -1)
+        {
+        }
+        else
+        {
+            editPanel.Visible = true;
+            Activity selectedActivity = activities[ActivityNamesForListboxIndexes[activitiesListBox.SelectedIndex]];
+            nameTextBox.Text = selectedActivity.prettyName;
+            productivityComboBox.SelectedIndex = (int)selectedActivity.productivity;
+            categoryComboBox.SelectedIndex = (int)selectedActivity.category;
+            activityNameLabel.Text = selectedActivity.name;
+        }
     }
-
-    // any of these changed, apply it to the current activity and resave
-    private void nameTextBox_TextChanged(object sender, EventArgs e)
+    private void button1_Click(object sender, EventArgs e)
     {
         if (activitiesListBox.SelectedIndex == -1)
             return;
-        if (!((TextBox)sender).Modified)
-            return;
+
         Activity selectedActivity = activities[ActivityNamesForListboxIndexes[activitiesListBox.SelectedIndex]];
         selectedActivity.prettyName = nameTextBox.Text.Replace(",", "").Replace("\n", "");
-        ResaveCSV();
-        ReloadUI();
-    }
-    private void productivenessComboBox_SelectedIndexChanged(object sender, EventArgs e)
-    {
-        if (activitiesListBox.SelectedIndex == -1)
-            return;
-        Activity selectedActivity = activities[ActivityNamesForListboxIndexes[activitiesListBox.SelectedIndex]];
         selectedActivity.productivity = (Productivity)productivityComboBox.SelectedIndex;
-        ResaveCSV();
-        ReloadUI();
-    }
-    private void categoryComboBox_SelectedIndexChanged(object sender, EventArgs e)
-    {
-        if (activitiesListBox.SelectedIndex == -1)
-            return;
-        Activity selectedActivity = activities[ActivityNamesForListboxIndexes[activitiesListBox.SelectedIndex]];
         selectedActivity.category = (Category)categoryComboBox.SelectedIndex;
+        activitiesListBox.ClearSelected();
+        
         ResaveCSV();
         ReloadUI();
     }
 
     void ResaveCSV()
     {
+        // sort
+        var thing = (from entry in activities orderby entry.Value.prettyName ascending select entry);
+        activities = thing.ToDictionary<KeyValuePair<ulong, Activity>, ulong, Activity>(pair => pair.Key, pair => pair.Value);
         string result = "";
         foreach(Activity activity in activities.Values)
         {
@@ -1171,9 +1134,10 @@ public partial class Form1 : Form
                 timeByHourLabel.Text = "Focus by day";
                 timelineSubsteps = 7;
 
-                ViewStart = dateTimePicker1.Value - TimeSpan.FromDays((int)dateTimePicker1.Value.DayOfWeek);
-                ViewEnd = dateTimePicker1.Value + TimeSpan.FromDays(7 - (int)dateTimePicker1.Value.DayOfWeek);
-                ViewStart = new DateTime(ViewStart.Year, ViewStart.Month, ViewStart.Day, 0, 0, 0);
+                int dayOfWeek = MathMod((int)dateTimePicker1.Value.DayOfWeek-1, 7);
+                ViewStart = dateTimePicker1.Value - TimeSpan.FromDays(dayOfWeek);
+                ViewEnd = dateTimePicker1.Value + TimeSpan.FromDays(7 - dayOfWeek);
+                ViewStart = new DateTime(ViewStart.Year, ViewStart.Month, ViewStart.Day, 0, 0, 0) + TimeSpan.FromDays(1);
                 ViewEnd = new DateTime(ViewEnd.Year, ViewEnd.Month, ViewEnd.Day, 0, 0, 0);
                 break;
             case TimeView.Monthly:
@@ -1193,7 +1157,7 @@ public partial class Form1 : Form
                 dateTimePicker1.Format = DateTimePickerFormat.Custom;
                 dateTimePicker1.CustomFormat = "yyyy";
                 dateTimePicker1.ShowUpDown = true;
-                timeByHourLabel.Text = "Focus by day";
+                timeByHourLabel.Text = "Focus by week";
                 timelineSubsteps = 52;
 
                 ViewStart = dateTimePicker1.Value;
@@ -1266,13 +1230,6 @@ public partial class Form1 : Form
     {
         ReloadUI();
     }
-
-    private void statsForNerdsToolStripMenuItem_Click(object sender, EventArgs e)
-    {
-        // TODO: log currently active app
-        // Log file delta compared to realtime
-    }
-
     private void refreshToolStripMenuItem_Click(object sender, EventArgs e)
     {
         ReloadUI();
@@ -1281,5 +1238,21 @@ public partial class Form1 : Form
     private void startsForNerdsToolStripMenuItem_Click(object sender, EventArgs e)
     {
         statsPanel.Visible = !statsPanel.Visible;
+    }
+
+    private void activitiesListBox_Enter(object sender, EventArgs e)
+    {
+        Console.WriteLine("Enter");
+    }
+
+    private void activitiesListBox_Leave(object sender, EventArgs e)
+    {
+        Console.WriteLine("Leave");
+    }
+
+    private void filterLabel_Click(object sender, EventArgs e)
+    {
+        filterType = FilterType.None;
+        ReloadUI();
     }
 }

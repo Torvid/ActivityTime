@@ -26,3 +26,4 @@ C:\Users\Stinger\Dropbox\Stinger\projects\software\ActivityTime\ActivityWatchBut
 C:\Users\Stinger\Dropbox\Stinger\projects\software\ActivityTime\ActivityWatchButGood\bin\Debug\ActivityTime.pdb
 C:\Users\Stinger\Dropbox\Stinger\projects\software\ActivityTime\ActivityWatchButGood\obj\Debug\ActivityTime.exe
 C:\Users\Stinger\Dropbox\Stinger\projects\software\ActivityTime\ActivityWatchButGood\obj\Debug\ActivityTime.pdb
+C:\Users\Stinger\Dropbox\Stinger\projects\software\ActivityTime\ActivityWatchButGood\obj\Debug\ActivityTime.csproj.AssemblyReference.cache
