@@ -16,6 +16,7 @@ using System.Threading;
 using System.Collections.Concurrent;
 using UIAutomationClient;
 using TreeScope = UIAutomationClient.TreeScope;
+using System.Text.RegularExpressions;
 
 // Overview
 
@@ -301,6 +302,13 @@ public partial class Form1 : Form
     Category filteredCategory;
     FilterType filterType;
 
+    string FixupEnumName(string name)
+    {
+        string result = Regex.Replace(name, "([a-z])([A-Z])", "$1 $2");
+        result = result.Replace("And", "&");
+        return result;
+    }
+
     enum FilterType
     {
         None,
@@ -439,40 +447,16 @@ public partial class Form1 : Form
         {
             double percentage = TimeCategory[i].TotalSeconds / Total.TotalSeconds;
             categoryPctLabels[i].Text = Math.Round(percentage * 100) + "%";
-            categoryNameLabels[i].Text = categories[i].ToString();
+            categoryNameLabels[i].Text = FixupEnumName(categories[i].ToString()).Replace("&", "&&");
             categoryProgressPanels[i].Width = (int)(265.0 * percentage);
             categoryProgressPanels[i].BackColor = ProductivityColors[(int)CategoryProductivity[(int)categories[i]]];
         }
 
-        // get top N entries in by application
-        List<int> skipList = new List<int>();
-        for (int i = 0; i < top10Activities.Length; i++)
-        {
-            top10Activities[i] = null;
-            skipList.Add(-1);
-        }
-        for (int i = 0; i < top10Activities.Length; i++)
-        {
-            int largest = 0;
-            int j = 0;
-            foreach (Activity t in activities.Values)
-            {
-                if (skipList.Contains(j))
-                {
-                    j++;
-                    continue;
-                }
-                if (t.totalSecondsActive.TotalSeconds > largest && t.totalSecondsActive > TimeSpan.FromSeconds(10))
-                {
-                    largest = (int)t.totalSecondsActive.TotalSeconds;
-                    skipList[i] = j;
-                    top10Activities[i] = t;
-                    break;
-                }
-                j++;
-            }
-        }
-
+        top10Activities = (from entry 
+                           in activities 
+                           orderby entry.Value.totalSecondsActive descending 
+                           select entry.Value).Take(10).ToArray();
+        
         // Clear the graphs
         timelineChart.Series["VeryDistracting"].Points.Clear();
         timelineChart.Series["Distracting"].Points.Clear();
@@ -564,8 +548,9 @@ public partial class Form1 : Form
     public Form1()
     {
         InitializeComponent();
-        productivityComboBox.DataSource = Enum.GetValues(typeof(Productivity));
-        categoryComboBox.DataSource = Enum.GetValues(typeof(Category));
+
+        productivityComboBox.DataSource = (from Productivity d in Enum.GetValues(typeof(Productivity)) select FixupEnumName(d.ToString())).ToList();
+        categoryComboBox.DataSource = (from Category d in Enum.GetValues(typeof(Category)) select FixupEnumName(d.ToString())).ToList();
         timeViewComboBox.DataSource = Enum.GetValues(typeof(TimeView));
 
         dateTimePicker1.Value = DateTime.Now;
@@ -876,9 +861,15 @@ public partial class Form1 : Form
         uint processID = 0;
         uint threadID = GetWindowThreadProcessId(currentWindow, out processID);
 
-        //uint pid = GetWindowThreadProcessId(currentWindow, IntPtr.Zero);
-        Process proc = Process.GetProcessById((int)processID);
-
+        Process proc = null;
+        try
+        {
+            proc = Process.GetProcessById((int)processID);
+        }
+        catch { }
+        if (proc == null)
+            return "";
+        
         string exeName = proc.ProcessName;
 
         // result is the name of the exe.
@@ -1097,7 +1088,7 @@ public partial class Form1 : Form
     void ResaveCSV()
     {
         // sort
-        var thing = (from entry in activities orderby entry.Value.prettyName ascending select entry);
+        var thing = (from entry in activities orderby entry.Value.totalSecondsActive descending select entry);
         activities = thing.ToDictionary<KeyValuePair<ulong, Activity>, ulong, Activity>(pair => pair.Key, pair => pair.Value);
         string result = "";
         foreach(Activity activity in activities.Values)
@@ -1240,25 +1231,14 @@ public partial class Form1 : Form
     {
         statsPanel.Visible = !statsPanel.Visible;
     }
-
-    private void activitiesListBox_Enter(object sender, EventArgs e)
-    {
-        Console.WriteLine("Enter");
-    }
-
-    private void activitiesListBox_Leave(object sender, EventArgs e)
-    {
-        Console.WriteLine("Leave");
-    }
-
     private void filterLabel_Click(object sender, EventArgs e)
     {
         filterType = FilterType.None;
         ReloadUI();
     }
 
-    private void activityNameLabel_Click(object sender, EventArgs e)
+    private void showMyDataToolStripMenuItem_Click(object sender, EventArgs e)
     {
-
+        Process.Start(userDataPath);
     }
 }
