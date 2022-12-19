@@ -848,7 +848,7 @@ public partial class Form1 : Form
             CursorPosition = System.Windows.Forms.Cursor.Position;
             TicksWithMouseStill = 0;
         }
-        if (TicksWithMouseStill > (10 * 60 * 60))
+        if (TicksWithMouseStill > (10 * 60))
         {
             return "";
         }
