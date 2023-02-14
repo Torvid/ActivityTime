@@ -189,8 +189,8 @@ public partial class Form1 : Form
     public Productivity[] CategoryProductivity = new Productivity[]
     {
         Productivity.Neutral,
-        Productivity.VeryProductive,
         Productivity.Productive,
+        Productivity.Distracting,
         Productivity.VeryProductive,
         Productivity.VeryDistracting,
         Productivity.VeryProductive,
@@ -469,8 +469,31 @@ public partial class Form1 : Form
         {
             if (activity == null)
                 continue;
-            DateTime dt = new DateTime(2012, 1, 1) + activity.totalSecondsActive;
-            int i = histogramChart.Series["Entries"].Points.AddXY(activity.prettyName, dt);
+
+            double count = 0;
+            switch (timeView)
+            {
+                case TimeView.Daily:
+                    count = activity.totalSecondsActive.TotalSeconds / 60;
+                    histogramChart.ChartAreas[0].AxisY.LabelStyle.Format = "0\\m";
+                    break;
+                case TimeView.Weekly:
+                    count = activity.totalSecondsActive.TotalSeconds / 60 / 60;
+                    histogramChart.ChartAreas[0].AxisY.LabelStyle.Format = "0\\h";
+                    break;
+                case TimeView.Monthly:
+                    count = activity.totalSecondsActive.TotalSeconds / 60 / 60;
+                    histogramChart.ChartAreas[0].AxisY.LabelStyle.Format = "0\\h";
+                    break;
+                case TimeView.Yearly:
+                    count = activity.totalSecondsActive.TotalSeconds / 60 / 60 / 24;
+                    histogramChart.ChartAreas[0].AxisY.LabelStyle.Format = "0\\d";
+                    break;
+                default:
+                    break;
+            }
+
+            int i = histogramChart.Series["Entries"].Points.AddXY(activity.prettyName, count);
             histogramChart.Series["Entries"].Points[i].Color = ProductivityColors[(int)activity.productivity];
         }
         productivityTimelinePoints.Clear();
@@ -861,16 +884,17 @@ public partial class Form1 : Form
         uint processID = 0;
         uint threadID = GetWindowThreadProcessId(currentWindow, out processID);
 
+        string exeName = "";
         Process proc = null;
         try
         {
             proc = Process.GetProcessById((int)processID);
+            exeName = proc.ProcessName;
         }
         catch { }
         if (proc == null)
             return "";
         
-        string exeName = proc.ProcessName;
 
         // result is the name of the exe.
         string result = exeName;
@@ -932,6 +956,9 @@ public partial class Form1 : Form
     private void tick_Tick(object sender, EventArgs e)
     {
         string focusedActivityName = GetFocusedActivityName();
+        if (statsString2 == null || statsString2.Length > 10000)
+            statsString2 = "";
+
         statsLabel.Text = statsString2;
         ulong hash = 0;
         activeAppLabel.Text = "???";
@@ -1240,5 +1267,10 @@ public partial class Form1 : Form
     private void showMyDataToolStripMenuItem_Click(object sender, EventArgs e)
     {
         Process.Start(userDataPath);
+    }
+
+    private void histogramChart_Click(object sender, EventArgs e)
+    {
+
     }
 }

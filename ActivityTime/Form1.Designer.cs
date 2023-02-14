@@ -294,7 +294,7 @@ partial class Form1
             this.label16.Name = "label16";
             this.label16.Size = new System.Drawing.Size(92, 13);
             this.label16.TabIndex = 21;
-            this.label16.Text = "Version 18 (indev)";
+            this.label16.Text = "Version 19 (indev)";
             // 
             // histogramChart
             // 
@@ -305,7 +305,6 @@ partial class Form1
             chartArea1.AxisX.LabelStyle.Font = new System.Drawing.Font("Microsoft Sans Serif", 7F);
             chartArea1.AxisX.LabelStyle.IsStaggered = true;
             chartArea1.AxisX.LabelStyle.TruncatedLabels = true;
-            chartArea1.AxisY.LabelStyle.Format = "H\\h m\\m";
             chartArea1.Name = "ChartArea1";
             this.histogramChart.ChartAreas.Add(chartArea1);
             this.histogramChart.Location = new System.Drawing.Point(202, 270);
@@ -320,11 +319,12 @@ partial class Form1
             series1.ChartArea = "ChartArea1";
             series1.Name = "Entries";
             series1.XValueType = System.Windows.Forms.DataVisualization.Charting.ChartValueType.String;
-            series1.YValueType = System.Windows.Forms.DataVisualization.Charting.ChartValueType.Time;
+            series1.YValueType = System.Windows.Forms.DataVisualization.Charting.ChartValueType.Int32;
             this.histogramChart.Series.Add(series1);
             this.histogramChart.Size = new System.Drawing.Size(598, 179);
             this.histogramChart.TabIndex = 23;
             this.histogramChart.Text = "chart1";
+            this.histogramChart.Click += new System.EventHandler(this.histogramChart_Click);
             this.histogramChart.MouseClick += new System.Windows.Forms.MouseEventHandler(this.histogramChart_MouseClick);
             this.histogramChart.MouseMove += new System.Windows.Forms.MouseEventHandler(this.histogramChart_MouseMove);
             // 
@@ -442,9 +442,10 @@ partial class Form1
             this.pictureBox1.ContextMenuStrip = this.contextMenuStrip1;
             this.pictureBox1.Cursor = System.Windows.Forms.Cursors.Hand;
             this.pictureBox1.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox1.Image")));
-            this.pictureBox1.Location = new System.Drawing.Point(149, 300);
+            this.pictureBox1.Location = new System.Drawing.Point(138, 255);
             this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(67, 79);
+            this.pictureBox1.Size = new System.Drawing.Size(103, 151);
+            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
             this.pictureBox1.TabIndex = 30;
             this.pictureBox1.TabStop = false;
             this.pictureBox1.Click += new System.EventHandler(this.pictureBox1_Click);
@@ -637,6 +638,8 @@ partial class Form1
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.pictureBox1);
+            this.Controls.Add(this.activitiesListBox);
             this.Controls.Add(this.editPanel);
             this.Controls.Add(this.statsPanel);
             this.Controls.Add(this.activeAppLabel);
@@ -645,7 +648,6 @@ partial class Form1
             this.Controls.Add(this.categoryProgress2Panel);
             this.Controls.Add(this.categoryProgress1Panel);
             this.Controls.Add(this.categoryProgress0Panel);
-            this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.filterLabel);
             this.Controls.Add(this.label16);
             this.Controls.Add(this.label15);
@@ -653,7 +655,6 @@ partial class Form1
             this.Controls.Add(this.timeByHourLabel);
             this.Controls.Add(this.categoryPct4Label);
             this.Controls.Add(this.categoryPct3Label);
-            this.Controls.Add(this.activitiesListBox);
             this.Controls.Add(this.categoryPct2Label);
             this.Controls.Add(this.categoryPct1Label);
             this.Controls.Add(this.categoryPct0Label);
@@ -672,6 +673,7 @@ partial class Form1
             this.Controls.Add(this.categoryName3Label);
             this.Controls.Add(this.timelineChart);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.Name = "Form1";
             this.Text = "Activity Time";

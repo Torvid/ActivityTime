@@ -49,8 +49,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>
-    </ApplicationIcon>
+    <ApplicationIcon>64x64_alpha.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -149,6 +148,7 @@
     </COMReference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="64x64_alpha.ico" />
     <Content Include="icons8-clock-500.ico" />
     <Content Include="icons8-schedule-100.ico" />
     <Content Include="icons8-view-schedule-80.ico" />
