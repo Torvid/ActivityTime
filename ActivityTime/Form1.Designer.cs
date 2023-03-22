@@ -73,6 +73,8 @@ partial class Form1
             this.refreshToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.startsForNerdsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.showMyDataToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.addToStartupToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.showSystemStartupFolderToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.timeByHourLabel = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
             this.label15 = new System.Windows.Forms.Label();
@@ -89,6 +91,7 @@ partial class Form1
             this.button1 = new System.Windows.Forms.Button();
             this.editPanel = new System.Windows.Forms.Panel();
             this.countLabel = new System.Windows.Forms.Label();
+            this.label2 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.histogramChart)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.timelineChart)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
@@ -294,7 +297,7 @@ partial class Form1
             this.label16.Name = "label16";
             this.label16.Size = new System.Drawing.Size(92, 13);
             this.label16.TabIndex = 21;
-            this.label16.Text = "Version 19 (indev)";
+            this.label16.Text = "Version 21 (indev)";
             // 
             // histogramChart
             // 
@@ -442,7 +445,7 @@ partial class Form1
             this.pictureBox1.ContextMenuStrip = this.contextMenuStrip1;
             this.pictureBox1.Cursor = System.Windows.Forms.Cursors.Hand;
             this.pictureBox1.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox1.Image")));
-            this.pictureBox1.Location = new System.Drawing.Point(138, 255);
+            this.pictureBox1.Location = new System.Drawing.Point(138, 270);
             this.pictureBox1.Name = "pictureBox1";
             this.pictureBox1.Size = new System.Drawing.Size(103, 151);
             this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
@@ -455,30 +458,47 @@ partial class Form1
             this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.refreshToolStripMenuItem,
             this.startsForNerdsToolStripMenuItem,
-            this.showMyDataToolStripMenuItem});
+            this.showMyDataToolStripMenuItem,
+            this.addToStartupToolStripMenuItem,
+            this.showSystemStartupFolderToolStripMenuItem});
             this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(150, 70);
+            this.contextMenuStrip1.Size = new System.Drawing.Size(218, 114);
+            this.contextMenuStrip1.Opening += new System.ComponentModel.CancelEventHandler(this.contextMenuStrip1_Opening);
             // 
             // refreshToolStripMenuItem
             // 
             this.refreshToolStripMenuItem.Name = "refreshToolStripMenuItem";
-            this.refreshToolStripMenuItem.Size = new System.Drawing.Size(149, 22);
+            this.refreshToolStripMenuItem.Size = new System.Drawing.Size(217, 22);
             this.refreshToolStripMenuItem.Text = "Refresh";
             this.refreshToolStripMenuItem.Click += new System.EventHandler(this.refreshToolStripMenuItem_Click);
             // 
             // startsForNerdsToolStripMenuItem
             // 
             this.startsForNerdsToolStripMenuItem.Name = "startsForNerdsToolStripMenuItem";
-            this.startsForNerdsToolStripMenuItem.Size = new System.Drawing.Size(149, 22);
+            this.startsForNerdsToolStripMenuItem.Size = new System.Drawing.Size(217, 22);
             this.startsForNerdsToolStripMenuItem.Text = "Stats for nerds";
             this.startsForNerdsToolStripMenuItem.Click += new System.EventHandler(this.startsForNerdsToolStripMenuItem_Click);
             // 
             // showMyDataToolStripMenuItem
             // 
             this.showMyDataToolStripMenuItem.Name = "showMyDataToolStripMenuItem";
-            this.showMyDataToolStripMenuItem.Size = new System.Drawing.Size(149, 22);
+            this.showMyDataToolStripMenuItem.Size = new System.Drawing.Size(217, 22);
             this.showMyDataToolStripMenuItem.Text = "Show my data";
             this.showMyDataToolStripMenuItem.Click += new System.EventHandler(this.showMyDataToolStripMenuItem_Click);
+            // 
+            // addToStartupToolStripMenuItem
+            // 
+            this.addToStartupToolStripMenuItem.Name = "addToStartupToolStripMenuItem";
+            this.addToStartupToolStripMenuItem.Size = new System.Drawing.Size(217, 22);
+            this.addToStartupToolStripMenuItem.Text = "Add to system startup";
+            this.addToStartupToolStripMenuItem.Click += new System.EventHandler(this.addToStartupToolStripMenuItem_Click);
+            // 
+            // showSystemStartupFolderToolStripMenuItem
+            // 
+            this.showSystemStartupFolderToolStripMenuItem.Name = "showSystemStartupFolderToolStripMenuItem";
+            this.showSystemStartupFolderToolStripMenuItem.Size = new System.Drawing.Size(217, 22);
+            this.showSystemStartupFolderToolStripMenuItem.Text = "Show system startup folder";
+            this.showSystemStartupFolderToolStripMenuItem.Click += new System.EventHandler(this.showSystemStartupFolderToolStripMenuItem_Click);
             // 
             // timeByHourLabel
             // 
@@ -633,11 +653,21 @@ partial class Form1
             this.countLabel.TabIndex = 46;
             this.countLabel.Text = "Category";
             // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(138, 257);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(74, 13);
+            this.label2.TabIndex = 47;
+            this.label2.Text = "Right click me";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.label2);
             this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.activitiesListBox);
             this.Controls.Add(this.editPanel);
@@ -744,4 +774,7 @@ partial class Form1
     private System.Windows.Forms.Panel editPanel;
     private System.Windows.Forms.Label countLabel;
     private System.Windows.Forms.ToolStripMenuItem showMyDataToolStripMenuItem;
+    private System.Windows.Forms.ToolStripMenuItem addToStartupToolStripMenuItem;
+    private System.Windows.Forms.ToolStripMenuItem showSystemStartupFolderToolStripMenuItem;
+    private System.Windows.Forms.Label label2;
 }

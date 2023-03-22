@@ -41,3 +41,4 @@ C:\Users\Stinger\Dropbox\Stinger\projects\software\ActivityTime\ActivityTime\obj
 C:\Users\Stinger\Dropbox\Stinger\projects\software\ActivityTime\ActivityTime\obj\Debug\ActivityTime.csproj.CoreCompileInputs.cache
 C:\Users\Stinger\Dropbox\Stinger\projects\software\ActivityTime\ActivityTime\obj\Debug\ActivityTime.exe
 C:\Users\Stinger\Dropbox\Stinger\projects\software\ActivityTime\ActivityTime\obj\Debug\ActivityTime.pdb
+C:\Users\Stinger\Dropbox\Stinger\projects\software\ActivityTime\ActivityTime\obj\Debug\Interop.IWshRuntimeLibrary.dll

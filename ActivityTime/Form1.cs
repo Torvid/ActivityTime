@@ -46,6 +46,9 @@ using System.Text.RegularExpressions;
 
 // TODO: make the datetime picker actually just show the month for moth mode, only show year in year mode, etc.
 
+
+// TODO: add a "Gaming" Category
+
 public partial class Form1 : Form
 {
     // First some utlity functions!
@@ -183,6 +186,7 @@ public partial class Form1 : Form
         System,
         Miscellaneous,
         Utilities,
+        Gaming,
     }
 
     // How productive a category is
@@ -203,6 +207,7 @@ public partial class Form1 : Form
         Productivity.Neutral,
         Productivity.Neutral,
         Productivity.Neutral,
+        Productivity.VeryDistracting,
     };
 
     public class Activity
@@ -625,7 +630,7 @@ public partial class Form1 : Form
         initialized = true;
         ReloadUI();
 
-        // this is slow and unreprdictable so we do it in a different thread.<
+        // this is slow and unreprdictable so we do it in a different thread.
         Thread BrowserActivityUpdaterThread = new Thread(GetBrowserMapping);
         BrowserActivityUpdaterThread.Start();
     }
@@ -809,9 +814,6 @@ public partial class Form1 : Form
             // manners
             Thread.Sleep(1);
 
-
-            //mutex.WaitOne();
-            //statsString = "";
             foreach (var v in BrowserMapping)
             {
                 if (v.Value != null && v.Value.elementCOM == null)
@@ -822,7 +824,6 @@ public partial class Form1 : Form
 
                     BrowserData data = v.Value;
                     IUIAutomationElement elementCOM = null;
-                    //AutomationElement element = null;
 
                     // Tree naviation
                     if (elementCOM == null)
@@ -851,7 +852,6 @@ public partial class Form1 : Form
                     v.Value.elementCOM = elementCOM;
                 }
             }
-            statsString2 = statsString;
         }
     }
     void StatsLog2(string message)
@@ -859,16 +859,52 @@ public partial class Form1 : Form
         statsString += message + "\n";
     }
 
+    [StructLayout(LayoutKind.Sequential)]
+    struct LASTINPUTINFO
+    {
+        public static readonly int SizeOf = Marshal.SizeOf(typeof(LASTINPUTINFO));
 
-    // This function gets the exe name of whatver window the user has selected.
+        [MarshalAs(UnmanagedType.U4)]
+        public UInt32 cbSize;
+        [MarshalAs(UnmanagedType.U4)]
+        public UInt32 dwTime;
+    }
+    [DllImport("user32.dll")]
+    static extern bool GetLastInputInfo(ref LASTINPUTINFO plii);
+    static uint GetLastInputTime()
+    {
+        uint idleTime = 0;
+        LASTINPUTINFO lastInputInfo = new LASTINPUTINFO();
+        lastInputInfo.cbSize = (uint)Marshal.SizeOf(lastInputInfo);
+        lastInputInfo.dwTime = 0;
+
+        uint envTicks = (uint)Environment.TickCount;
+
+        if (GetLastInputInfo(ref lastInputInfo))
+        {
+            uint lastInputTick = lastInputInfo.dwTime;
+
+            idleTime = envTicks - lastInputTick;
+        }
+
+        return ((idleTime > 0) ? (idleTime / 1000) : 0);
+    }
+
+    int TicksWithMouseStill = 0;
+    //System.Drawing.Point CursorPosition = new System.Drawing.Point(0, 0);
+    uint lastInputTime;
+    // This function gets the exe name of whatever window the user has selected.
     // Activities are either exe names, or domain names.
     string GetFocusedActivityName()
     {
+        // Idle detection
         // If the mouse has been still for 10 minutes, we assume the user is afk and pause logging.
         TicksWithMouseStill++;
-        if (CursorPosition != System.Windows.Forms.Cursor.Position)
+        uint time = GetLastInputTime();
+        Console.WriteLine(time);
+        if (lastInputTime != time)
         {
-            CursorPosition = System.Windows.Forms.Cursor.Position;
+            lastInputTime = time;
             TicksWithMouseStill = 0;
         }
         if (TicksWithMouseStill > (10 * 60))
@@ -895,10 +931,9 @@ public partial class Form1 : Form
         if (proc == null)
             return "";
         
-
         // result is the name of the exe.
         string result = exeName;
-
+        
         if (exeName == "firefox" || exeName == "chrome" || exeName == "brave" || exeName == "msedge")
         {
             if (!BrowserMapping.ContainsKey(currentWindow))
@@ -916,9 +951,7 @@ public partial class Form1 : Form
                 if (exeName == "msedge")
                     data.browserType = BrowserType.Edge;
 
-                //mutex.WaitOne();
                 BrowserMapping.TryAdd(currentWindow, data);
-                //mutex.ReleaseMutex();
             }
 
             if (BrowserMapping.ContainsKey(currentWindow) && BrowserMapping[currentWindow] != null)
@@ -949,17 +982,14 @@ public partial class Form1 : Form
     }
     
     string statsString;
-    string statsString2;
 
-    int TicksWithMouseStill = 0;
-    System.Drawing.Point CursorPosition = new System.Drawing.Point(0, 0);
     private void tick_Tick(object sender, EventArgs e)
     {
         string focusedActivityName = GetFocusedActivityName();
-        if (statsString2 == null || statsString2.Length > 10000)
-            statsString2 = "";
+        if (statsString == null || statsString.Length > 10000)
+            statsString = "";
 
-        statsLabel.Text = statsString2;
+        statsLabel.Text = statsString;
         ulong hash = 0;
         activeAppLabel.Text = "???";
         if (focusedActivityName != "")
@@ -1272,5 +1302,33 @@ public partial class Form1 : Form
     private void histogramChart_Click(object sender, EventArgs e)
     {
 
+    }
+
+    private void contextMenuStrip1_Opening(object sender, System.ComponentModel.CancelEventArgs e)
+    {
+
+    }
+
+    string exeDirectory = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
+    string startupPath = Environment.GetFolderPath(Environment.SpecialFolder.Startup) + @"\ActivityTime.lnk";
+
+    public void CreateShortcut(string shortcutLocation, string targetFileLocation)
+    {
+        IWshRuntimeLibrary.WshShell shell = new IWshRuntimeLibrary.WshShell();
+        IWshRuntimeLibrary.IWshShortcut shortcut = (IWshRuntimeLibrary.IWshShortcut)shell.CreateShortcut(shortcutLocation);
+        shortcut.Description = "ActivityTime shortcut";
+        shortcut.IconLocation = exeDirectory;
+        shortcut.TargetPath = targetFileLocation;
+        shortcut.Save();
+    }
+
+    private void addToStartupToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+        CreateShortcut(startupPath, exeDirectory + @"\ActivityTime.exe");
+    }
+
+    private void showSystemStartupFolderToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+        System.Diagnostics.Process.Start(Environment.GetFolderPath(Environment.SpecialFolder.Startup));
     }
 }
