@@ -28,17 +28,17 @@ partial class Form1
     private void InitializeComponent()
     {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea1 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Series series1 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea2 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel1 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
-            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel2 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
-            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel3 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
-            System.Windows.Forms.DataVisualization.Charting.Series series2 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series3 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series4 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series5 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series6 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea11 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Series series31 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea12 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel16 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
+            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel17 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
+            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel18 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
+            System.Windows.Forms.DataVisualization.Charting.Series series32 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series33 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series34 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series35 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series36 = new System.Windows.Forms.DataVisualization.Charting.Series();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             this.tick = new System.Windows.Forms.Timer(this.components);
             this.activitiesListBox = new System.Windows.Forms.ListBox();
@@ -88,7 +88,6 @@ partial class Form1
             this.activeAppLabel = new System.Windows.Forms.Label();
             this.statsPanel = new System.Windows.Forms.Panel();
             this.statsLabel = new System.Windows.Forms.Label();
-            this.button1 = new System.Windows.Forms.Button();
             this.editPanel = new System.Windows.Forms.Panel();
             this.countLabel = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
@@ -118,7 +117,7 @@ partial class Form1
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(8, 105);
+            this.label3.Location = new System.Drawing.Point(7, 87);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(49, 13);
             this.label3.TabIndex = 5;
@@ -127,7 +126,7 @@ partial class Form1
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(8, 66);
+            this.label1.Location = new System.Drawing.Point(7, 48);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(62, 13);
             this.label1.TabIndex = 3;
@@ -135,23 +134,25 @@ partial class Form1
             // 
             // categoryComboBox
             // 
+            this.categoryComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.categoryComboBox.FormattingEnabled = true;
-            this.categoryComboBox.Location = new System.Drawing.Point(8, 119);
+            this.categoryComboBox.Location = new System.Drawing.Point(7, 101);
             this.categoryComboBox.Name = "categoryComboBox";
             this.categoryComboBox.Size = new System.Drawing.Size(211, 21);
             this.categoryComboBox.TabIndex = 2;
             // 
             // productivityComboBox
             // 
+            this.productivityComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.productivityComboBox.FormattingEnabled = true;
-            this.productivityComboBox.Location = new System.Drawing.Point(8, 80);
+            this.productivityComboBox.Location = new System.Drawing.Point(7, 62);
             this.productivityComboBox.Name = "productivityComboBox";
             this.productivityComboBox.Size = new System.Drawing.Size(211, 21);
             this.productivityComboBox.TabIndex = 1;
             // 
             // nameTextBox
             // 
-            this.nameTextBox.Location = new System.Drawing.Point(8, 42);
+            this.nameTextBox.Location = new System.Drawing.Point(7, 24);
             this.nameTextBox.Name = "nameTextBox";
             this.nameTextBox.Size = new System.Drawing.Size(211, 20);
             this.nameTextBox.TabIndex = 6;
@@ -159,7 +160,7 @@ partial class Form1
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(8, 26);
+            this.label5.Location = new System.Drawing.Point(4, 8);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(65, 13);
             this.label5.TabIndex = 7;
@@ -183,6 +184,7 @@ partial class Form1
             this.timeLoggedLabel.Size = new System.Drawing.Size(103, 31);
             this.timeLoggedLabel.TabIndex = 9;
             this.timeLoggedLabel.Text = "1h 32m";
+            this.timeLoggedLabel.Click += new System.EventHandler(this.timeLoggedLabel_Click);
             // 
             // categoryName0Label
             // 
@@ -262,6 +264,7 @@ partial class Form1
             this.label13.Size = new System.Drawing.Size(30, 13);
             this.label13.TabIndex = 16;
             this.label13.Text = "View";
+            this.label13.Click += new System.EventHandler(this.label13_Click);
             // 
             // label14
             // 
@@ -271,6 +274,7 @@ partial class Form1
             this.label14.Size = new System.Drawing.Size(41, 13);
             this.label14.TabIndex = 17;
             this.label14.Text = "Activity";
+            this.label14.Click += new System.EventHandler(this.label14_Click);
             // 
             // dateTimePicker1
             // 
@@ -289,6 +293,7 @@ partial class Form1
             this.chooseDayLabel.TabIndex = 19;
             this.chooseDayLabel.Text = "Choose Day";
             this.chooseDayLabel.TextAlign = System.Drawing.ContentAlignment.TopRight;
+            this.chooseDayLabel.Click += new System.EventHandler(this.chooseDayLabel_Click);
             // 
             // label16
             // 
@@ -297,19 +302,20 @@ partial class Form1
             this.label16.Name = "label16";
             this.label16.Size = new System.Drawing.Size(92, 13);
             this.label16.TabIndex = 21;
-            this.label16.Text = "Version 21 (indev)";
+            this.label16.Text = "Version 22 (indev)";
+            this.label16.Click += new System.EventHandler(this.label16_Click);
             // 
             // histogramChart
             // 
             this.histogramChart.BackColor = System.Drawing.SystemColors.Control;
-            chartArea1.AxisX.Interval = 1D;
-            chartArea1.AxisX.IsLabelAutoFit = false;
-            chartArea1.AxisX.LabelAutoFitStyle = System.Windows.Forms.DataVisualization.Charting.LabelAutoFitStyles.WordWrap;
-            chartArea1.AxisX.LabelStyle.Font = new System.Drawing.Font("Microsoft Sans Serif", 7F);
-            chartArea1.AxisX.LabelStyle.IsStaggered = true;
-            chartArea1.AxisX.LabelStyle.TruncatedLabels = true;
-            chartArea1.Name = "ChartArea1";
-            this.histogramChart.ChartAreas.Add(chartArea1);
+            chartArea11.AxisX.Interval = 1D;
+            chartArea11.AxisX.IsLabelAutoFit = false;
+            chartArea11.AxisX.LabelAutoFitStyle = System.Windows.Forms.DataVisualization.Charting.LabelAutoFitStyles.WordWrap;
+            chartArea11.AxisX.LabelStyle.Font = new System.Drawing.Font("Microsoft Sans Serif", 7F);
+            chartArea11.AxisX.LabelStyle.IsStaggered = true;
+            chartArea11.AxisX.LabelStyle.TruncatedLabels = true;
+            chartArea11.Name = "ChartArea1";
+            this.histogramChart.ChartAreas.Add(chartArea11);
             this.histogramChart.Location = new System.Drawing.Point(202, 270);
             this.histogramChart.Name = "histogramChart";
             this.histogramChart.Palette = System.Windows.Forms.DataVisualization.Charting.ChartColorPalette.None;
@@ -319,11 +325,11 @@ partial class Form1
         System.Drawing.Color.FromArgb(((int)(((byte)(177)))), ((int)(((byte)(193)))), ((int)(((byte)(191))))),
         System.Drawing.Color.FromArgb(((int)(((byte)(61)))), ((int)(((byte)(128)))), ((int)(((byte)(224))))),
         System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(85)))), ((int)(((byte)(196)))))};
-            series1.ChartArea = "ChartArea1";
-            series1.Name = "Entries";
-            series1.XValueType = System.Windows.Forms.DataVisualization.Charting.ChartValueType.String;
-            series1.YValueType = System.Windows.Forms.DataVisualization.Charting.ChartValueType.Int32;
-            this.histogramChart.Series.Add(series1);
+            series31.ChartArea = "ChartArea1";
+            series31.Name = "Entries";
+            series31.XValueType = System.Windows.Forms.DataVisualization.Charting.ChartValueType.String;
+            series31.YValueType = System.Windows.Forms.DataVisualization.Charting.ChartValueType.Int32;
+            this.histogramChart.Series.Add(series31);
             this.histogramChart.Size = new System.Drawing.Size(598, 179);
             this.histogramChart.TabIndex = 23;
             this.histogramChart.Text = "chart1";
@@ -334,17 +340,17 @@ partial class Form1
             // timelineChart
             // 
             this.timelineChart.BackColor = System.Drawing.SystemColors.Control;
-            chartArea2.AlignmentOrientation = ((System.Windows.Forms.DataVisualization.Charting.AreaAlignmentOrientations)((System.Windows.Forms.DataVisualization.Charting.AreaAlignmentOrientations.Vertical | System.Windows.Forms.DataVisualization.Charting.AreaAlignmentOrientations.Horizontal)));
-            chartArea2.AxisX.Interval = 1D;
-            customLabel1.Text = "a";
-            customLabel2.Text = "b";
-            customLabel3.Text = "c";
-            chartArea2.AxisX2.CustomLabels.Add(customLabel1);
-            chartArea2.AxisX2.CustomLabels.Add(customLabel2);
-            chartArea2.AxisX2.CustomLabels.Add(customLabel3);
-            chartArea2.AxisY.LabelStyle.Format = "{0:#,0;#,0}m";
-            chartArea2.Name = "ChartArea1";
-            this.timelineChart.ChartAreas.Add(chartArea2);
+            chartArea12.AlignmentOrientation = ((System.Windows.Forms.DataVisualization.Charting.AreaAlignmentOrientations)((System.Windows.Forms.DataVisualization.Charting.AreaAlignmentOrientations.Vertical | System.Windows.Forms.DataVisualization.Charting.AreaAlignmentOrientations.Horizontal)));
+            chartArea12.AxisX.Interval = 1D;
+            customLabel16.Text = "a";
+            customLabel17.Text = "b";
+            customLabel18.Text = "c";
+            chartArea12.AxisX2.CustomLabels.Add(customLabel16);
+            chartArea12.AxisX2.CustomLabels.Add(customLabel17);
+            chartArea12.AxisX2.CustomLabels.Add(customLabel18);
+            chartArea12.AxisY.LabelStyle.Format = "{0:#,0;#,0}m";
+            chartArea12.Name = "ChartArea1";
+            this.timelineChart.ChartAreas.Add(chartArea12);
             this.timelineChart.Location = new System.Drawing.Point(113, 64);
             this.timelineChart.Name = "timelineChart";
             this.timelineChart.Palette = System.Windows.Forms.DataVisualization.Charting.ChartColorPalette.None;
@@ -354,29 +360,30 @@ partial class Form1
         System.Drawing.Color.FromArgb(((int)(((byte)(177)))), ((int)(((byte)(193)))), ((int)(((byte)(191))))),
         System.Drawing.Color.FromArgb(((int)(((byte)(61)))), ((int)(((byte)(128)))), ((int)(((byte)(224))))),
         System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(85)))), ((int)(((byte)(196)))))};
-            series2.ChartArea = "ChartArea1";
-            series2.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.StackedColumn;
-            series2.Name = "Distracting";
-            series3.ChartArea = "ChartArea1";
-            series3.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.StackedColumn;
-            series3.Name = "VeryDistracting";
-            series4.ChartArea = "ChartArea1";
-            series4.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.StackedColumn;
-            series4.Name = "Neutral";
-            series5.ChartArea = "ChartArea1";
-            series5.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.StackedColumn;
-            series5.Name = "Productive";
-            series6.ChartArea = "ChartArea1";
-            series6.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.StackedColumn;
-            series6.Name = "VeryProductive";
-            this.timelineChart.Series.Add(series2);
-            this.timelineChart.Series.Add(series3);
-            this.timelineChart.Series.Add(series4);
-            this.timelineChart.Series.Add(series5);
-            this.timelineChart.Series.Add(series6);
+            series32.ChartArea = "ChartArea1";
+            series32.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.StackedColumn;
+            series32.Name = "Distracting";
+            series33.ChartArea = "ChartArea1";
+            series33.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.StackedColumn;
+            series33.Name = "VeryDistracting";
+            series34.ChartArea = "ChartArea1";
+            series34.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.StackedColumn;
+            series34.Name = "Neutral";
+            series35.ChartArea = "ChartArea1";
+            series35.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.StackedColumn;
+            series35.Name = "Productive";
+            series36.ChartArea = "ChartArea1";
+            series36.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.StackedColumn;
+            series36.Name = "VeryProductive";
+            this.timelineChart.Series.Add(series32);
+            this.timelineChart.Series.Add(series33);
+            this.timelineChart.Series.Add(series34);
+            this.timelineChart.Series.Add(series35);
+            this.timelineChart.Series.Add(series36);
             this.timelineChart.Size = new System.Drawing.Size(413, 201);
             this.timelineChart.TabIndex = 24;
             this.timelineChart.Text = "chart2";
+            this.timelineChart.Click += new System.EventHandler(this.timelineChart_Click);
             this.timelineChart.MouseClick += new System.Windows.Forms.MouseEventHandler(this.timelineChart_MouseClick);
             this.timelineChart.MouseMove += new System.Windows.Forms.MouseEventHandler(this.timelineChart_MouseMove);
             // 
@@ -445,7 +452,7 @@ partial class Form1
             this.pictureBox1.ContextMenuStrip = this.contextMenuStrip1;
             this.pictureBox1.Cursor = System.Windows.Forms.Cursors.Hand;
             this.pictureBox1.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox1.Image")));
-            this.pictureBox1.Location = new System.Drawing.Point(138, 270);
+            this.pictureBox1.Location = new System.Drawing.Point(135, 270);
             this.pictureBox1.Name = "pictureBox1";
             this.pictureBox1.Size = new System.Drawing.Size(103, 151);
             this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
@@ -526,11 +533,12 @@ partial class Form1
             this.label15.Size = new System.Drawing.Size(88, 13);
             this.label15.TabIndex = 34;
             this.label15.Text = "Time by category";
+            this.label15.Click += new System.EventHandler(this.label15_Click);
             // 
             // activityNameLabel
             // 
             this.activityNameLabel.AutoSize = true;
-            this.activityNameLabel.Location = new System.Drawing.Point(8, 177);
+            this.activityNameLabel.Location = new System.Drawing.Point(7, 128);
             this.activityNameLabel.Name = "activityNameLabel";
             this.activityNameLabel.Size = new System.Drawing.Size(49, 13);
             this.activityNameLabel.TabIndex = 35;
@@ -595,17 +603,19 @@ partial class Form1
             this.activeAppLabel.Size = new System.Drawing.Size(57, 13);
             this.activeAppLabel.TabIndex = 43;
             this.activeAppLabel.Text = "active app";
+            this.activeAppLabel.Click += new System.EventHandler(this.activeAppLabel_Click);
             // 
             // statsPanel
             // 
             this.statsPanel.AutoScroll = true;
             this.statsPanel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.statsPanel.Controls.Add(this.statsLabel);
-            this.statsPanel.Location = new System.Drawing.Point(391, 25);
+            this.statsPanel.Location = new System.Drawing.Point(391, 52);
             this.statsPanel.Name = "statsPanel";
-            this.statsPanel.Size = new System.Drawing.Size(377, 397);
+            this.statsPanel.Size = new System.Drawing.Size(377, 370);
             this.statsPanel.TabIndex = 44;
             this.statsPanel.Visible = false;
+            this.statsPanel.Paint += new System.Windows.Forms.PaintEventHandler(this.statsPanel_Paint);
             // 
             // statsLabel
             // 
@@ -616,22 +626,11 @@ partial class Form1
             this.statsLabel.TabIndex = 1;
             this.statsLabel.Text = "stats";
             // 
-            // button1
-            // 
-            this.button1.Location = new System.Drawing.Point(8, 149);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(75, 23);
-            this.button1.TabIndex = 45;
-            this.button1.Text = "Done";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
-            // 
             // editPanel
             // 
             this.editPanel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.editPanel.Controls.Add(this.countLabel);
             this.editPanel.Controls.Add(this.label5);
-            this.editPanel.Controls.Add(this.button1);
             this.editPanel.Controls.Add(this.nameTextBox);
             this.editPanel.Controls.Add(this.label3);
             this.editPanel.Controls.Add(this.label1);
@@ -640,14 +639,14 @@ partial class Form1
             this.editPanel.Controls.Add(this.activityNameLabel);
             this.editPanel.Location = new System.Drawing.Point(138, 25);
             this.editPanel.Name = "editPanel";
-            this.editPanel.Size = new System.Drawing.Size(227, 213);
+            this.editPanel.Size = new System.Drawing.Size(227, 167);
             this.editPanel.TabIndex = 46;
             this.editPanel.Visible = false;
             // 
             // countLabel
             // 
             this.countLabel.AutoSize = true;
-            this.countLabel.Location = new System.Drawing.Point(8, 192);
+            this.countLabel.Location = new System.Drawing.Point(7, 145);
             this.countLabel.Name = "countLabel";
             this.countLabel.Size = new System.Drawing.Size(49, 13);
             this.countLabel.TabIndex = 46;
@@ -656,21 +655,22 @@ partial class Form1
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(138, 257);
+            this.label2.Location = new System.Drawing.Point(164, 405);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(74, 13);
+            this.label2.Size = new System.Drawing.Size(83, 13);
             this.label2.TabIndex = 47;
-            this.label2.Text = "Right click me";
+            this.label2.Text = "Right click me :)";
+            this.label2.Click += new System.EventHandler(this.label2_Click);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.editPanel);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.activitiesListBox);
-            this.Controls.Add(this.editPanel);
             this.Controls.Add(this.statsPanel);
             this.Controls.Add(this.activeAppLabel);
             this.Controls.Add(this.categoryProgress4Panel);
@@ -710,6 +710,7 @@ partial class Form1
             this.Activated += new System.EventHandler(this.Form1_Activated);
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
             this.Load += new System.EventHandler(this.Form1_Load);
+            this.Click += new System.EventHandler(this.Form1_Click);
             ((System.ComponentModel.ISupportInitialize)(this.histogramChart)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.timelineChart)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
@@ -770,11 +771,11 @@ partial class Form1
     private System.Windows.Forms.ToolStripMenuItem refreshToolStripMenuItem;
     private System.Windows.Forms.ToolStripMenuItem startsForNerdsToolStripMenuItem;
     private System.Windows.Forms.Label statsLabel;
-    private System.Windows.Forms.Button button1;
     private System.Windows.Forms.Panel editPanel;
     private System.Windows.Forms.Label countLabel;
     private System.Windows.Forms.ToolStripMenuItem showMyDataToolStripMenuItem;
     private System.Windows.Forms.ToolStripMenuItem addToStartupToolStripMenuItem;
     private System.Windows.Forms.ToolStripMenuItem showSystemStartupFolderToolStripMenuItem;
     private System.Windows.Forms.Label label2;
+    private System.Windows.Forms.Button button2;
 }

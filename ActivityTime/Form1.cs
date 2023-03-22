@@ -46,9 +46,6 @@ using System.Text.RegularExpressions;
 
 // TODO: make the datetime picker actually just show the month for moth mode, only show year in year mode, etc.
 
-
-// TODO: add a "Gaming" Category
-
 public partial class Form1 : Form
 {
     // First some utlity functions!
@@ -98,6 +95,20 @@ public partial class Form1 : Form
             return result;
         }
     }
+
+    string exeDirectory = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
+    string startupPath = Environment.GetFolderPath(Environment.SpecialFolder.Startup) + @"\ActivityTime.lnk";
+
+    public void CreateShortcut(string shortcutLocation, string targetFileLocation)
+    {
+        IWshRuntimeLibrary.WshShell shell = new IWshRuntimeLibrary.WshShell();
+        IWshRuntimeLibrary.IWshShortcut shortcut = (IWshRuntimeLibrary.IWshShortcut)shell.CreateShortcut(shortcutLocation);
+        shortcut.Description = "ActivityTime shortcut";
+        shortcut.IconLocation = exeDirectory;
+        shortcut.TargetPath = targetFileLocation;
+        shortcut.Save();
+    }
+
 
     // Extracts the domain name part of a string.
     string CleanupURL(string result)
@@ -672,21 +683,21 @@ public partial class Form1 : Form
         IUIAutomationElement element = null;
         try
         {
-            StatsLog2("    ElementFromHandle()");
+            StatsLog("    ElementFromHandle()");
             Thread.Sleep(250);
             element = automation.ElementFromHandle(data.window);
         }
-        catch { };
+        catch (Exception e) { StatsLog("Exception: " + e.Message); };
 
         if (element == null)
         {
-            StatsLog2("    ElementFromHandle() failed.");
+            StatsLog("    ElementFromHandle() failed.");
             return null;
         }
 
         try
         {
-            StatsLog2("    FindFirst()");
+            StatsLog("    FindFirst()");
             Thread.Sleep(250);
             if(data.browserType == BrowserType.Firefox)
                 element = element.FindFirst(TreeScope.TreeScope_Descendants, automation.CreatePropertyCondition(UIA_AutomationIdPropertyId, "urlbar-input"));
@@ -697,27 +708,27 @@ public partial class Form1 : Form
             if (data.browserType == BrowserType.Edge)
                 element = element.FindFirst(TreeScope.TreeScope_Descendants, automation.CreatePropertyCondition(UIA_NamePropertyId, "Address and search bar"));
         }
-        catch { };
+        catch (Exception e){ StatsLog("Exception: " + e.Message); };
 
         if (element == null)
         {
-            StatsLog2("    FindFirst() failed null.");
+            StatsLog("    FindFirst() failed null.");
             return null;
         }
 
         if(element.CurrentControlType != UIA_EditControlTypeId)
         {
-            StatsLog2("    FindFirst() failed Not an edit control.");
+            StatsLog("    FindFirst() failed Not an edit control.");
         }
         Process proc = Process.GetProcessById((int)element.CurrentProcessId);
-        StatsLog2("    element found, belongs to: " + proc.ProcessName);
-        StatsLog2("    element found, name is: " + element.CurrentName);
+        StatsLog("    element found, belongs to: " + proc.ProcessName);
+        StatsLog("    element found, name is: " + element.CurrentName);
 
 
         IUIAutomationValuePattern value = null;
         try
         {
-            StatsLog2("    GetCurrentPattern()");
+            StatsLog("    GetCurrentPattern()");
             Thread.Sleep(250);
             value = (IUIAutomationValuePattern)element.GetCurrentPattern(UIA_ValuePatternId);
         }
@@ -725,7 +736,7 @@ public partial class Form1 : Form
 
         if (value == null)
         {
-            StatsLog2("    GetCurrentPattern() failed null.");
+            StatsLog("    GetCurrentPattern() failed null.");
             return null;
         }
 
@@ -736,22 +747,20 @@ public partial class Form1 : Form
         }
         catch
         {
-            StatsLog2("    GetCurrentPattern() com timeout.");
+            StatsLog("    GetCurrentPattern() com timeout.");
             return null;
         }
         if (CurrentValue == "")
         {
-            StatsLog2("    GetCurrentPattern() failed emptystring.");
+            StatsLog("    GetCurrentPattern() failed emptystring.");
             return null;
         }
 
         return element;
     }
 
-    IUIAutomationElement GetEditElementViaDeadReckoningCOM(CUIAutomation automation, BrowserData data)
+    IUIAutomationElement GetEditElementViaDeadReckoningCOM(CUIAutomation automation, BrowserData data, int magicOffsetX, int magicOffsetY)
     {
-        int magicOffsetX = 400;
-        int magicOffsetY = 55;
         RECT rect = new RECT();
         GetWindowRect(data.window, ref rect);
         tagPOINT testPoint = new tagPOINT();
@@ -762,7 +771,7 @@ public partial class Form1 : Form
         IUIAutomationElement element = null;
         try
         {
-            StatsLog2("    ElementFromPoint()");
+            StatsLog("    ElementFromPoint()");
             Thread.Sleep(250);
             element = automation.ElementFromPoint(testPoint);
         }
@@ -770,14 +779,14 @@ public partial class Form1 : Form
 
         if (element == null)
         {
-            StatsLog2("    ElementFromPoint() failed.");
+            StatsLog("    ElementFromPoint() failed.");
             return null;
         }
 
         IUIAutomationValuePattern value = null;
         try
         {
-            StatsLog2("    GetCurrentPattern()");
+            StatsLog("    GetCurrentPattern()");
             Thread.Sleep(250);
             value = (IUIAutomationValuePattern)element.GetCurrentPattern(UIA_ValuePatternId);
         }
@@ -785,7 +794,7 @@ public partial class Form1 : Form
 
         if (value == null)
         {
-            StatsLog2("    GetCurrentPattern() failed null.");
+            StatsLog("    GetCurrentPattern() failed null.");
             return null;
         }
         string CurrentValue = "";
@@ -795,12 +804,12 @@ public partial class Form1 : Form
         }
         catch
         {
-            StatsLog2("    GetCurrentPattern() com timeout.");
+            StatsLog("    GetCurrentPattern() com timeout.");
             return null;
         }
         if (CurrentValue == "")
         {
-            StatsLog2("    GetCurrentPattern() failed emptystring.");
+            StatsLog("    GetCurrentPattern() failed emptystring.");
             return null;
         }
 
@@ -818,9 +827,9 @@ public partial class Form1 : Form
             {
                 if (v.Value != null && v.Value.elementCOM == null)
                 {
-                    StatsLog2("");
-                    StatsLog2("--------");
-                    StatsLog2("START Check mapping for program: " + v.Value.name + ", window: " + v.Value.window.ToString());
+                    StatsLog("");
+                    StatsLog("--------");
+                    StatsLog("START Check mapping for program: " + v.Value.name + ", window: " + v.Value.window.ToString());
 
                     BrowserData data = v.Value;
                     IUIAutomationElement elementCOM = null;
@@ -828,33 +837,43 @@ public partial class Form1 : Form
                     // Tree naviation
                     if (elementCOM == null)
                     {
-                        StatsLog2("Tree navigation via COM API");
+                        StatsLog("Tree navigation via COM API");
                         elementCOM = GetEditElementViaTreeNavigation(automation, data);
                     }
                     if (elementCOM == null)
-                        StatsLog2("Tree navigation via COM API FAILED.");
+                        StatsLog("Tree navigation via COM API FAILED.");
 
                     // COM API Dead Reckoning
                     if (elementCOM == null)
                     {
-                        StatsLog2("Dead Reckoning via COM API");
-                        elementCOM = GetEditElementViaDeadReckoningCOM(automation, data);
+                        StatsLog("Dead Reckoning via COM API");
+                        elementCOM = GetEditElementViaDeadReckoningCOM(automation, data, 400, 55);
                     }
                     if (elementCOM == null)
-                        StatsLog2("Dead Reckoning via COM API FAILED");
-                    
+                        StatsLog("Dead Reckoning via COM API FAILED");
+
+                    // COM API Dead Reckoning
                     if (elementCOM == null)
                     {
-                        StatsLog2("Everything failed. Trying again...");
+                        StatsLog("Dead Reckoning via COM API, Trying again with differen coordinates.");
+                        elementCOM = GetEditElementViaDeadReckoningCOM(automation, data, 400, 65);
+                    }
+                    if (elementCOM == null)
+                        StatsLog("Dead Reckoning via COM API FAILED");
+
+                    if (elementCOM == null)
+                    {
+                        StatsLog("Everything failed. Trying again...");
                         continue;
                     }
-                    StatsLog2("Success.");
+                    StatsLog("Success.");
                     v.Value.elementCOM = elementCOM;
                 }
             }
         }
     }
-    void StatsLog2(string message)
+
+    void StatsLog(string message)
     {
         statsString += message + "\n";
     }
@@ -891,7 +910,6 @@ public partial class Form1 : Form
     }
 
     int TicksWithMouseStill = 0;
-    //System.Drawing.Point CursorPosition = new System.Drawing.Point(0, 0);
     uint lastInputTime;
     // This function gets the exe name of whatever window the user has selected.
     // Activities are either exe names, or domain names.
@@ -901,7 +919,7 @@ public partial class Form1 : Form
         // If the mouse has been still for 10 minutes, we assume the user is afk and pause logging.
         TicksWithMouseStill++;
         uint time = GetLastInputTime();
-        Console.WriteLine(time);
+
         if (lastInputTime != time)
         {
             lastInputTime = time;
@@ -982,9 +1000,18 @@ public partial class Form1 : Form
     }
     
     string statsString;
-
+    int lastDay = -1;
     private void tick_Tick(object sender, EventArgs e)
     {
+        if (lastDay == -1)
+            lastDay = DateTime.Now.Day;
+        if (lastDay != DateTime.Now.Day)
+        {
+            dateTimePicker1.Value = dateTimePicker1.Value.AddDays(1);
+            lastDay = DateTime.Now.Day;
+        }
+
+
         string focusedActivityName = GetFocusedActivityName();
         if (statsString == null || statsString.Length > 10000)
             statsString = "";
@@ -1019,7 +1046,7 @@ public partial class Form1 : Form
         }
         ulong currentTimestamp = (ulong)DateTimeOffset.Now.ToUnixTimeSeconds();
         long d = ((long)currentTimestamp - (long)fileTimestamp);
-        //Console.WriteLine(d);
+
         if (Math.Abs((double)d) > (60 * 5)) // If we've drifted by 5 minutes, reset the counter
         {
             currentFocusedProgram = 0;
@@ -1055,6 +1082,8 @@ public partial class Form1 : Form
 
     private void histogramChart_MouseClick(object sender, MouseEventArgs e)
     {
+        if (DismissActivityEditIfItsOpen())
+            return;
         var r = histogramChart.HitTest(e.X, e.Y);
 
         if (r.ChartElementType == ChartElementType.DataPoint)
@@ -1076,6 +1105,8 @@ public partial class Form1 : Form
     }
     private void timelineChart_MouseClick(object sender, MouseEventArgs e)
     {
+        if (DismissActivityEditIfItsOpen())
+            return;
         var r = timelineChart.HitTest(e.X, e.Y);
 
         if (r.ChartElementType == ChartElementType.DataPoint)
@@ -1127,7 +1158,7 @@ public partial class Form1 : Form
             countLabel.Text = "time: " + selectedActivity.totalSecondsActive.ToString();
         }
     }
-    private void button1_Click(object sender, EventArgs e)
+    private void button1_Click()
     {
         if (activitiesListBox.SelectedIndex == -1)
             return;
@@ -1157,6 +1188,8 @@ public partial class Form1 : Form
 
     private void timeViewComboBox_SelectedIndexChanged(object sender, EventArgs e)
     {
+        if (DismissActivityEditIfItsOpen())
+            return;
         TimeChanged();
     }
 
@@ -1221,17 +1254,23 @@ public partial class Form1 : Form
     }
     private void dateTimePicker1_ValueChanged(object sender, EventArgs e)
     {
+        if (DismissActivityEditIfItsOpen())
+            return;
         TimeChanged();
     }
 
     private void pictureBox1_Click(object sender, EventArgs e)
     {
+        if (DismissActivityEditIfItsOpen())
+            return;
         filterType = FilterType.None;
         ReloadUI();
     }
 
     private void categoryName4Label_Click(object sender, EventArgs e)
     {
+        if (DismissActivityEditIfItsOpen())
+            return;
         filteredCategory = categories[4];
         filterType = FilterType.Category;
         ReloadUI();
@@ -1239,6 +1278,8 @@ public partial class Form1 : Form
 
     private void categoryName3Label_Click(object sender, EventArgs e)
     {
+        if (DismissActivityEditIfItsOpen())
+            return;
         filteredCategory = categories[3];
         filterType = FilterType.Category;
         ReloadUI();
@@ -1246,6 +1287,8 @@ public partial class Form1 : Form
 
     private void categoryName2Label_Click(object sender, EventArgs e)
     {
+        if (DismissActivityEditIfItsOpen())
+            return;
         filteredCategory = categories[2];
         filterType = FilterType.Category;
         ReloadUI();
@@ -1253,6 +1296,8 @@ public partial class Form1 : Form
 
     private void categoryName1Label_Click(object sender, EventArgs e)
     {
+        if (DismissActivityEditIfItsOpen())
+            return;
         filteredCategory = categories[1];
         filterType = FilterType.Category;
         ReloadUI();
@@ -1260,6 +1305,8 @@ public partial class Form1 : Form
 
     private void categoryName0Label_Click(object sender, EventArgs e)
     {
+        if (DismissActivityEditIfItsOpen())
+            return;
         filteredCategory = categories[0];
         filterType = FilterType.Category;
         ReloadUI();
@@ -1290,6 +1337,8 @@ public partial class Form1 : Form
     }
     private void filterLabel_Click(object sender, EventArgs e)
     {
+        if (DismissActivityEditIfItsOpen())
+            return;
         filterType = FilterType.None;
         ReloadUI();
     }
@@ -1301,27 +1350,14 @@ public partial class Form1 : Form
 
     private void histogramChart_Click(object sender, EventArgs e)
     {
-
+        if (DismissActivityEditIfItsOpen())
+            return;
     }
 
     private void contextMenuStrip1_Opening(object sender, System.ComponentModel.CancelEventArgs e)
     {
 
     }
-
-    string exeDirectory = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
-    string startupPath = Environment.GetFolderPath(Environment.SpecialFolder.Startup) + @"\ActivityTime.lnk";
-
-    public void CreateShortcut(string shortcutLocation, string targetFileLocation)
-    {
-        IWshRuntimeLibrary.WshShell shell = new IWshRuntimeLibrary.WshShell();
-        IWshRuntimeLibrary.IWshShortcut shortcut = (IWshRuntimeLibrary.IWshShortcut)shell.CreateShortcut(shortcutLocation);
-        shortcut.Description = "ActivityTime shortcut";
-        shortcut.IconLocation = exeDirectory;
-        shortcut.TargetPath = targetFileLocation;
-        shortcut.Save();
-    }
-
     private void addToStartupToolStripMenuItem_Click(object sender, EventArgs e)
     {
         CreateShortcut(startupPath, exeDirectory + @"\ActivityTime.exe");
@@ -1330,5 +1366,86 @@ public partial class Form1 : Form
     private void showSystemStartupFolderToolStripMenuItem_Click(object sender, EventArgs e)
     {
         System.Diagnostics.Process.Start(Environment.GetFolderPath(Environment.SpecialFolder.Startup));
+    }
+
+    private void Form1_Click(object sender, EventArgs e)
+    {
+        if (DismissActivityEditIfItsOpen())
+            return;
+    }
+
+    // returns true if the dialog was open, so we can return early and not do anything
+    bool DismissActivityEditIfItsOpen()
+    {
+        if(editPanel.Visible)
+        {
+            button1_Click();
+            return true;
+        }
+        return false;
+    }
+
+    private void statsPanel_Paint(object sender, PaintEventArgs e)
+    {
+        if (DismissActivityEditIfItsOpen())
+            return;
+    }
+
+    private void label16_Click(object sender, EventArgs e)
+    {
+        if (DismissActivityEditIfItsOpen())
+            return;
+    }
+
+    private void activeAppLabel_Click(object sender, EventArgs e)
+    {
+        if (DismissActivityEditIfItsOpen())
+            return;
+    }
+
+    private void timelineChart_Click(object sender, EventArgs e)
+    {
+        if (DismissActivityEditIfItsOpen())
+            return;
+    }
+
+    private void label13_Click(object sender, EventArgs e)
+    {
+        if (DismissActivityEditIfItsOpen())
+            return;
+    }
+
+    private void label14_Click(object sender, EventArgs e)
+    {
+        if (DismissActivityEditIfItsOpen())
+            return;
+    }
+
+    private void timeLoggedLabel_Click(object sender, EventArgs e)
+    {
+        if (DismissActivityEditIfItsOpen())
+            return;
+    }
+
+    private void chooseDayLabel_Click(object sender, EventArgs e)
+    {
+        if (DismissActivityEditIfItsOpen())
+            return;
+    }
+
+    private void label15_Click(object sender, EventArgs e)
+    {
+        if (DismissActivityEditIfItsOpen())
+            return;
+    }
+
+    private void button1_Click(object sender, EventArgs e)
+    {
+    }
+
+    private void label2_Click(object sender, EventArgs e)
+    {
+        if (DismissActivityEditIfItsOpen())
+            return;
     }
 }
