@@ -310,7 +310,7 @@ public partial class Form1 : Form
     // time spent focusing on something that's not a activity, like the desktop.
     TimeSpan outsideTime = TimeSpan.Zero;
     Category[] categories;
-    TimeSpan totalTime = TimeSpan.Zero;
+    TimeSpan insideTime = TimeSpan.Zero;
 
     List<(ulong, DateTimeOffset, DateTimeOffset)> rawData = new List<(ulong, DateTimeOffset, DateTimeOffset)>();
 
@@ -338,7 +338,7 @@ public partial class Form1 : Form
     // fills "secondsActive" of all activities based on the input timerange
     void ReloadUI()
     {
-        editPanel.Visible = false;
+        //editPanel.Visible = false;
         if (!initialized)
             return;
 
@@ -354,7 +354,7 @@ public partial class Form1 : Form
             t.totalSecondsActive = TimeSpan.Zero;
         }
         outsideTime = TimeSpan.Zero;
-        totalTime = TimeSpan.Zero;
+        insideTime = TimeSpan.Zero;
 
         int ProductivityCount = Enum.GetNames(typeof(Productivity)).Length;
         TimeSpan[,] TimeHours = new TimeSpan[ProductivityCount, timelineSubsteps];
@@ -395,7 +395,6 @@ public partial class Form1 : Form
             if (overlap == TimeSpan.Zero)
                 continue;
 
-            totalTime += overlap;
 
             if (hash == 0)
             {
@@ -403,6 +402,7 @@ public partial class Form1 : Form
             }
             else
             {
+                insideTime += overlap;
                 activities[hash].totalSecondsActive += overlap;
 
                 TimeCategory[(int)activities[hash].category] += overlap;
@@ -425,10 +425,10 @@ public partial class Form1 : Form
             }
         }
 
-        if ((int)Math.Floor(totalTime.TotalHours) == 0)
-            timeLoggedLabel.Text = $@"{totalTime.Minutes}m";
+        if ((int)Math.Floor(insideTime.TotalHours) == 0)
+            timeLoggedLabel.Text = $@"{insideTime.Minutes}m";
         else
-            timeLoggedLabel.Text = $@"{(int)Math.Floor(totalTime.TotalHours)}h {totalTime.Minutes}m";
+            timeLoggedLabel.Text = $@"{(int)Math.Floor(insideTime.TotalHours)}h {insideTime.Minutes}m";
 
         // Sort
         Array.Sort(TimeCategory, categories);
@@ -560,6 +560,7 @@ public partial class Form1 : Form
     bool noRefreshFlag = false;
     void RefreshListBox()
     {
+        int sel = activitiesListBox.SelectedIndex;
         ActivityNamesForListbox.Clear();
         ActivityNamesForListboxIndexes.Clear();
         foreach (KeyValuePair<ulong, Activity> entry in activities)
@@ -581,6 +582,7 @@ public partial class Form1 : Form
         activitiesListBox.DataSource = null;
         activitiesListBox.DataSource = ActivityNamesForListbox;
         activitiesListBox.ClearSelected();
+        activitiesListBox.SelectedIndex = sel;
         noRefreshFlag = false;
     }
 
@@ -588,6 +590,59 @@ public partial class Form1 : Form
     {
         InitializeComponent();
 
+
+        ToolStripMenuItem clearMenuItem = new ToolStripMenuItem();
+        ToolStripMenuItem categoryMenuItem    = new ToolStripMenuItem();
+        ToolStripMenuItem productivityMenuItem = new ToolStripMenuItem();
+
+        this.contextMenuStripFilter.Items.AddRange(new System.Windows.Forms.ToolStripItem[]
+        {
+            clearMenuItem,
+            categoryMenuItem,
+            productivityMenuItem
+        });
+
+        this.contextMenuStrip1.Size = new System.Drawing.Size(218, 114);
+
+        clearMenuItem.Size = new System.Drawing.Size(217, 22);
+        clearMenuItem.Text = "Clear Filter";
+        clearMenuItem.Click += new EventHandler(delegate (Object o, EventArgs a)
+        {
+            filterType = FilterType.None;
+            ReloadUI();
+        });
+
+        categoryMenuItem.Size = new System.Drawing.Size(217, 22);
+        categoryMenuItem.Text = "Filter by Category";
+        foreach (int i in Enum.GetValues(typeof(Category)))
+        {
+            ToolStripMenuItem thing = new ToolStripMenuItem();
+            thing.Text = Enum.GetName(typeof(Category), i);
+            categoryMenuItem.DropDownItems.Add(thing);
+            thing.Click += new EventHandler(delegate (Object o, EventArgs a)
+            {
+                int j = i;
+                filteredCategory = (Category)j;
+                filterType = FilterType.Category;
+                ReloadUI();
+            });
+        }
+
+        productivityMenuItem.Size = new System.Drawing.Size(217, 22);
+        productivityMenuItem.Text = "Filter by Productivity";
+        foreach (int i in Enum.GetValues(typeof(Productivity)))
+        {
+            ToolStripMenuItem thing = new ToolStripMenuItem();
+            thing.Text = Enum.GetName(typeof(Productivity), i);
+            productivityMenuItem.DropDownItems.Add(thing);
+            thing.Click += new EventHandler(delegate (Object o, EventArgs a)
+            {
+                int j = i;
+                filteredProductivity = (Productivity)j;
+                filterType = FilterType.Productivity;
+                ReloadUI();
+            });
+        }
         productivityComboBox.DataSource = (from Productivity d in Enum.GetValues(typeof(Productivity)) select FixupEnumName(d.ToString())).ToList();
         categoryComboBox.DataSource = (from Category d in Enum.GetValues(typeof(Category)) select FixupEnumName(d.ToString())).ToList();
         timeViewComboBox.DataSource = Enum.GetValues(typeof(TimeView));
@@ -909,6 +964,7 @@ public partial class Form1 : Form
         return ((idleTime > 0) ? (idleTime / 1000) : 0);
     }
 
+    System.Drawing.Point CursorPosition = new System.Drawing.Point(0, 0);
     int TicksWithMouseStill = 0;
     uint lastInputTime;
     // This function gets the exe name of whatever window the user has selected.
@@ -920,9 +976,9 @@ public partial class Form1 : Form
         TicksWithMouseStill++;
         uint time = GetLastInputTime();
 
-        if (lastInputTime != time)
+        if (CursorPosition != System.Windows.Forms.Cursor.Position)
         {
-            lastInputTime = time;
+            CursorPosition = System.Windows.Forms.Cursor.Position;
             TicksWithMouseStill = 0;
         }
         if (TicksWithMouseStill > (10 * 60))
@@ -1139,11 +1195,19 @@ public partial class Form1 : Form
         else
             timelineChart.Cursor = Cursors.Default;
     }
-
+    int lastIndex = -1;
     private void activitiesListBox_SelectedIndexChanged(object sender, EventArgs e)
     {
         if (noRefreshFlag)
             return;
+
+        if(lastIndex != 0 && editPanel.Visible)
+        {
+            applyActivity(lastIndex, false);
+        }
+        lastIndex = activitiesListBox.SelectedIndex;
+        //DismissActivityEditIfItsOpen();
+
         if (activitiesListBox.SelectedIndex == -1)
         {
         }
@@ -1158,19 +1222,26 @@ public partial class Form1 : Form
             countLabel.Text = "time: " + selectedActivity.totalSecondsActive.ToString();
         }
     }
-    private void button1_Click()
+    private void applyActivity(int index, bool clear)
     {
-        if (activitiesListBox.SelectedIndex == -1)
+        if (index == -1)
             return;
 
-        Activity selectedActivity = activities[ActivityNamesForListboxIndexes[activitiesListBox.SelectedIndex]];
+        Activity selectedActivity = activities[ActivityNamesForListboxIndexes[index]];
         selectedActivity.prettyName = nameTextBox.Text.Replace(",", "").Replace("\n", "");
         selectedActivity.productivity = (Productivity)productivityComboBox.SelectedIndex;
         selectedActivity.category = (Category)categoryComboBox.SelectedIndex;
-        activitiesListBox.ClearSelected();
+        if(clear)
+        {
+            noRefreshFlag = true;
+            activitiesListBox.ClearSelected();
+            editPanel.Visible = false;
+            noRefreshFlag = false;
+        }
         
         ResaveCSV();
         ReloadUI();
+        RefreshListBox();
     }
 
     void ResaveCSV()
@@ -1379,7 +1450,7 @@ public partial class Form1 : Form
     {
         if(editPanel.Visible)
         {
-            button1_Click();
+            applyActivity(activitiesListBox.SelectedIndex, true);
             return true;
         }
         return false;
