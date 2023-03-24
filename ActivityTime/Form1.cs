@@ -624,6 +624,7 @@ public partial class Form1 : Form
                 int j = i;
                 filteredCategory = (Category)j;
                 filterType = FilterType.Category;
+                DismissActivityEditIfItsOpen();
                 ReloadUI();
             });
         }
@@ -640,6 +641,7 @@ public partial class Form1 : Form
                 int j = i;
                 filteredProductivity = (Productivity)j;
                 filterType = FilterType.Productivity;
+                DismissActivityEditIfItsOpen();
                 ReloadUI();
             });
         }
@@ -1518,5 +1520,32 @@ public partial class Form1 : Form
     {
         if (DismissActivityEditIfItsOpen())
             return;
+    }
+
+    private void Form1_Deactivate(object sender, EventArgs e)
+    {
+        if (DismissActivityEditIfItsOpen())
+            return;
+    }
+
+    private void Form1_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.KeyCode == Keys.Escape || e.KeyCode == Keys.Enter)
+        {
+            if (DismissActivityEditIfItsOpen())
+                return;
+        }
+    }
+
+    private void activitiesListBox_MouseDown(object sender, MouseEventArgs e)
+    {
+        System.Drawing.Point pt = new System.Drawing.Point(e.X, e.Y);
+        int index = activitiesListBox.IndexFromPoint(pt);
+
+        if (index <= -1)
+        {
+            if (DismissActivityEditIfItsOpen())
+                return;
+        }
     }
 }
