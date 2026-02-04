@@ -40,11 +40,10 @@ using System.Text.RegularExpressions;
 
 // TODO: test it under heavy load, like gigabytes of logged data. Make sure it's fast.
 // TODO: look into how stable the "timer" is. Maybe it drifts over time.
-// TODO: make the dog say snarky things about what programs you are using? xD
-
-// TODO: bug, make it so that when the day rolls over, the date automatically changes
+// TODO: make the dog say snarky things about what programs you are using? xD (helpful stuff too)
 
 // TODO: make the datetime picker actually just show the month for moth mode, only show year in year mode, etc.
+// TODO: make it so when you pin the program to the taskbar, close the window, then click the icon on te taskbar it re-opens the window
 
 public partial class Form1 : Form
 {
@@ -385,7 +384,6 @@ public partial class Form1 : Form
             }
         }
 
-
         foreach (var entry in rawData)
         {
             ulong hash = entry.Item1;
@@ -394,7 +392,6 @@ public partial class Form1 : Form
             TimeSpan overlap = GetTimeOverlap(FocusStart, FocusEnd, ViewStart, ViewEnd);
             if (overlap == TimeSpan.Zero)
                 continue;
-
 
             if (hash == 0)
             {
@@ -582,7 +579,8 @@ public partial class Form1 : Form
         activitiesListBox.DataSource = null;
         activitiesListBox.DataSource = ActivityNamesForListbox;
         activitiesListBox.ClearSelected();
-        activitiesListBox.SelectedIndex = sel;
+        if(sel < activitiesListBox.Items.Count)
+            activitiesListBox.SelectedIndex = sel;
         noRefreshFlag = false;
     }
 
@@ -651,6 +649,34 @@ public partial class Form1 : Form
 
         dateTimePicker1.Value = DateTime.Now;
         
+        MenuItem ExitButton = new MenuItem();
+        //MenuItem OpenWindowButton = new MenuItem();
+        //MenuItem ContactButton = new MenuItem();
+        //MenuItem PreferencesButton = new MenuItem();
+        ContextMenu IconRightClickMenu = new ContextMenu();
+
+        //IconRightClickMenu.MenuItems.Add(OpenWindowButton);
+        //IconRightClickMenu.MenuItems.Add("-");
+        //IconRightClickMenu.MenuItems.Add(ContactButton);
+        //IconRightClickMenu.MenuItems.Add(PreferencesButton);
+        IconRightClickMenu.MenuItems.Add(ExitButton);
+
+        ExitButton.Text = "Exit";
+        ExitButton.Click += new EventHandler(delegate (Object o, EventArgs a)
+        {
+            Environment.Exit(0);
+        });
+
+        notifyIcon1.ContextMenu = IconRightClickMenu;
+        notifyIcon1.Visible = true;
+        //ContactButton.Text = "Contact / Bugs";
+        //ContactButton.Click += new EventHandler(ContactButton_Click);
+        //
+        //PreferencesButton.Text = "Settings";
+        //PreferencesButton.Click += new EventHandler(Preferences_Click);
+        //
+        //OpenWindowButton.Text = "Open Window";
+        //OpenWindowButton.Click += new EventHandler(OpenWindowButton_Click);
     }
 
     ulong sessionStartTimestamp;
@@ -709,6 +735,7 @@ public partial class Form1 : Form
         Chrome,
         Brave,
         Edge,
+        Opera,
     }
 
     class BrowserData
@@ -717,9 +744,10 @@ public partial class Form1 : Form
         public BrowserType browserType;
         public IntPtr window;
         public IUIAutomationElement elementCOM;
+        public int failCount;
     }
 
-    //static Mutex mutex = new Mutex();
+
     ConcurrentDictionary<IntPtr, BrowserData> BrowserMapping = new ConcurrentDictionary<IntPtr, BrowserData>();
 
     // https://learn.microsoft.com/en-us/windows/win32/winauto/uiauto-automation-element-propids
@@ -763,6 +791,8 @@ public partial class Form1 : Form
             if (data.browserType == BrowserType.Chrome)
                 element = element.FindFirst(TreeScope.TreeScope_Descendants, automation.CreatePropertyCondition(UIA_NamePropertyId, "Address and search bar"));
             if (data.browserType == BrowserType.Edge)
+                element = element.FindFirst(TreeScope.TreeScope_Descendants, automation.CreatePropertyCondition(UIA_NamePropertyId, "Address and search bar"));
+            if (data.browserType == BrowserType.Opera)
                 element = element.FindFirst(TreeScope.TreeScope_Descendants, automation.CreatePropertyCondition(UIA_NamePropertyId, "Address and search bar"));
         }
         catch (Exception e){ StatsLog("Exception: " + e.Message); };
@@ -879,7 +909,7 @@ public partial class Form1 : Form
         {
             // manners
             Thread.Sleep(1);
-
+            List<IntPtr> thingsToRemove = new List<IntPtr>();
             foreach (var v in BrowserMapping)
             {
                 if (v.Value != null && v.Value.elementCOM == null)
@@ -921,11 +951,23 @@ public partial class Form1 : Form
                     if (elementCOM == null)
                     {
                         StatsLog("Everything failed. Trying again...");
+                        v.Value.failCount++;
+                        if(v.Value.failCount > 5)
+                        {
+                            StatsLog("Failed 5 times in a row, something is clearly wrong. Removing this window.");
+                            thingsToRemove.Add(v.Key);
+                        }
                         continue;
                     }
                     StatsLog("Success.");
                     v.Value.elementCOM = elementCOM;
                 }
+            }
+
+            foreach(IntPtr i in thingsToRemove)
+            {
+                BrowserData d;
+                BrowserMapping.TryRemove(i, out d);
             }
         }
     }
@@ -1010,7 +1052,7 @@ public partial class Form1 : Form
         // result is the name of the exe.
         string result = exeName;
         
-        if (exeName == "firefox" || exeName == "chrome" || exeName == "brave" || exeName == "msedge")
+        if (exeName == "firefox" || exeName == "chrome" || exeName == "brave" || exeName == "msedge" || exeName == "opera")
         {
             if (!BrowserMapping.ContainsKey(currentWindow))
             {
@@ -1026,6 +1068,8 @@ public partial class Form1 : Form
                     data.browserType = BrowserType.Brave;
                 if (exeName == "msedge")
                     data.browserType = BrowserType.Edge;
+                if (exeName == "opera")
+                    data.browserType = BrowserType.Opera;
 
                 BrowserMapping.TryAdd(currentWindow, data);
             }
@@ -1392,7 +1436,12 @@ public partial class Form1 : Form
 
     private void Form1_FormClosing(object sender, FormClosingEventArgs e)
     {
-        Environment.Exit(0);
+        if (e.CloseReason == CloseReason.UserClosing)
+        {
+            e.Cancel = true;
+            this.Hide();
+            this.ShowInTaskbar = false;
+        }
     }
 
     private void refreshStripMenuItem_Click(object sender, EventArgs e)
@@ -1547,5 +1596,18 @@ public partial class Form1 : Form
             if (DismissActivityEditIfItsOpen())
                 return;
         }
+    }
+
+    private void notifyIcon1_MouseDoubleClick(object sender, MouseEventArgs e)
+    {
+        this.ShowInTaskbar = true;
+        this.Activate();
+        this.Show();
+        this.BringToFront();
+    }
+
+    private void button1_Click_1(object sender, EventArgs e)
+    {
+        //webBrowser1.Navigate("www.torvid.net");
     }
 }
